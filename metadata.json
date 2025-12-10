@@ -1,0 +1,5 @@
+{
+  "name": "Copy of KSA-HRMS-SaaS",
+  "description": "A Saudi-compliant HR Management System SaaS prototype featuring GOSI payroll calculation, WPS generation, and multi-tenant architecture documentation.",
+  "requestFramePermissions": []
+}
