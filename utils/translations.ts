@@ -35,6 +35,11 @@ export const translations = {
     architecture: "System Architecture",
     permissions: "Permissions", // NEW
     permissions_subtitle: "Manage user access and roles",
+    role_manager: "Administrator",
+    role_admin: "Deputy Administrator",
+    role_dept_manager: "Customer Manager",
+    role_employee: "Employees",
+    select_role: "Select Role",
     general_access: "General Access",
     restricted_access: "Restricted Access",
     save_permissions: "Save Permissions",
@@ -507,6 +512,11 @@ export const translations = {
     architecture: "هيكلة النظام",
     permissions: 'الصلاحيات', // NEW
     permissions_subtitle: 'إدارة الوصول والأدوار',
+    role_manager: "مدير النظام",
+    role_admin: "نائب المدير",
+    role_dept_manager: "مدير العملاء",
+    role_employee: "موظفين",
+    select_role: "اختر الدور",
     general_access: 'سماحية عامة',
     restricted_access: 'سماحية مقيدة',
     save_permissions: 'حفظ الصلاحيات',

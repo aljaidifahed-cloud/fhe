@@ -18,6 +18,27 @@ export enum Page {
   MY_WARNINGS = 'my_warnings'
 }
 
+export enum UserRole {
+  MANAGER = 'MANAGER', // Owner
+  ADMIN = 'ADMIN',     // Assistant Manager / System Admin
+  DEPT_MANAGER = 'DEPT_MANAGER',
+  EMPLOYEE = 'EMPLOYEE'
+}
+
+export enum Permission {
+  VIEW_ALL_EMPLOYEES = 'VIEW_ALL_EMPLOYEES',
+  MANAGE_ALL_EMPLOYEES = 'MANAGE_ALL_EMPLOYEES', // Add/Edit/Delete anyone
+  MANAGE_DEPT_EMPLOYEES = 'MANAGE_DEPT_EMPLOYEES', // Add/Edit own dept
+  VIEW_SALARIES = 'VIEW_SALARIES',
+  MANAGE_PAYROLL = 'MANAGE_PAYROLL',
+  MANAGE_SETTINGS = 'MANAGE_SETTINGS',
+  VIEW_REPORTS = 'VIEW_REPORTS',
+  APPROVE_REQUESTS_FINAL = 'APPROVE_REQUESTS_FINAL',
+  APPROVE_REQUESTS_INITIAL = 'APPROVE_REQUESTS_INITIAL',
+  MANAGE_WARNINGS = 'MANAGE_WARNINGS',
+  VIEW_ORG_CHART = 'VIEW_ORG_CHART'
+}
+
 export enum NationalityType {
   SAUDI = 'Saudi Arabia',
   NON_SAUDI = 'Non-Saudi'
@@ -48,6 +69,7 @@ export interface Employee {
   city?: string;
   district?: string;
   contract: Contract;
+  role: UserRole;
   permissions?: Record<string, boolean>;
 }
 

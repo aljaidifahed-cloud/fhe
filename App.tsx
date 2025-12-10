@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Bars3Icon } from '@heroicons/react/24/outline'; // New Import
 import { MoonLogo } from './components/MoonLogo'; // New Import
+import { hasPermission } from './utils/rbac'; // Import Helper
+import { Permission } from './types'; // Import Types
 import { Sidebar } from './components/Sidebar';
 import { Dashboard } from './pages/Dashboard';
 import { Employees } from './pages/Employees';
@@ -42,31 +44,37 @@ const AppContent: React.FC = () => {
 
     const alwaysAllowed = [Page.DASHBOARD, Page.PROFILE];
 
-    // Pages that don't have explicit permission switches but might inherit or be open
-    // For now, let's just check the ones that match the sidebar permissions
-    // content pages:
+    // Check generic pages
     if (alwaysAllowed.includes(currentPage)) return;
+    if (currentPage === Page.REQUESTS || currentPage === Page.INBOX) return;
+    if (currentPage === Page.MY_WARNINGS) return;
 
-    // Special case: Add/Edit Employee usually requires EMPLOYEES permission
-    if (currentPage === Page.ADD_EMPLOYEE || currentPage === Page.EDIT_EMPLOYEE) {
-      if (!currentUser.permissions?.[Page.EMPLOYEES]) {
-        setCurrentPage(Page.DASHBOARD);
-      }
-      return;
+    // Check Specific Permissions
+    let allowed = false;
+    const permissions = currentUser.permissions;
+
+    switch (currentPage) {
+      case Page.EMPLOYEES: allowed = hasPermission(permissions, Permission.VIEW_ALL_EMPLOYEES) || hasPermission(permissions, Permission.MANAGE_DEPT_EMPLOYEES); break;
+      case Page.ORG_CHART: allowed = hasPermission(permissions, Permission.VIEW_ORG_CHART); break;
+      case Page.PAYROLL: allowed = hasPermission(permissions, Permission.MANAGE_PAYROLL) || hasPermission(permissions, Permission.VIEW_SALARIES); break;
+      case Page.PERMISSIONS: allowed = hasPermission(permissions, Permission.MANAGE_ALL_EMPLOYEES); break; // Only admins
+      case Page.WARNINGS_COMMITMENTS: allowed = hasPermission(permissions, Permission.MANAGE_WARNINGS); break;
+      case Page.ADD_EMPLOYEE:
+      case Page.EDIT_EMPLOYEE:
+        // Needs proper permission
+        allowed = hasPermission(permissions, Permission.MANAGE_ALL_EMPLOYEES) || hasPermission(permissions, Permission.MANAGE_DEPT_EMPLOYEES);
+        break;
+      case Page.ATTENDANCE: allowed = true; break; // Everyone for now?
+      default: allowed = true; // Unknown pages allowed for safety or deny? Let's say deny if not listed.
+        // Actually, let's keep it robust. If not in list, maybe it's new.
+        // But for security, better deny.
+        // Let's check if it's one of the other pages.
+        if ([Page.ARCHITECTURE, Page.PRIVATE].includes(currentPage)) allowed = false;
+        break;
     }
 
-    // Direct Permission Check
-    if (currentUser.permissions && currentUser.permissions[currentPage] === false) {
-      // Explicitly denied or missing (undefined logic depends on default. Here undefined is treated as "not true" so denied)
-      // BUT wait, older users might have undefined permissions.
-      // If undefined, do we allow or deny? 
-      // The prompt implies strict control "let me choose what permissions...". 
-      // Safe default is DENY.
-      if (!currentUser.permissions[currentPage]) {
-        setCurrentPage(Page.DASHBOARD);
-      }
-    } else if (!currentUser.permissions?.[currentPage]) {
-      // Handle undefined case (default deny)
+    if (!allowed) {
+      console.warn(`Access Denied to ${currentPage} for ${currentUser.id}`);
       setCurrentPage(Page.DASHBOARD);
     }
 

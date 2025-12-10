@@ -1,6 +1,6 @@
-import { Employee, NationalityType, ContractType, ServiceRequest, RequestType, RequestStatus, OrgTreeNode } from '../types';
+import { Employee, NationalityType, ContractType, ServiceRequest, RequestType, RequestStatus, OrgTreeNode, UserRole } from '../types';
 
-const DB_KEY = 'hr_system_db_v5';
+const DB_KEY = 'hr_system_db_v6';
 const REQUESTS_KEY = 'hr_system_requests_v4';
 const WARNINGS_KEY = 'hr_system_warnings_v1';
 const DEDUCTIONS_KEY = 'hr_system_deductions_v1';
@@ -19,14 +19,15 @@ const SEED_DATA: Employee[] = [
     position: "CEO",
     department: "Management",
     joinDate: "2020-01-01",
-    email: "fahad@company.com",
+    email: "fahad@fahad.sa",
     phoneNumber: "+966 50 000 0001",
     city: "Riyadh",
     district: "Al Olaya",
     iban: "SA0000000000000000000001",
     bankName: "Saudi National Bank",
     avatarUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?fit=facearea&facepad=2&w=256&h=256&q=80",
-    contract: { basicSalary: 35000, housingAllowance: 8750, transportAllowance: 2000, otherAllowance: 0 }
+    contract: { basicSalary: 35000, housingAllowance: 8750, transportAllowance: 2000, otherAllowance: 0 },
+    role: UserRole.MANAGER
   },
   // 2. HR Manager (Saudi) - Incomplete
   {
@@ -46,7 +47,8 @@ const SEED_DATA: Employee[] = [
     district: "Al Rawdah",
     iban: "", // Incomplete
     bankName: "",
-    contract: { basicSalary: 18000, housingAllowance: 4500, transportAllowance: 1500, otherAllowance: 0 }
+    contract: { basicSalary: 18000, housingAllowance: 4500, transportAllowance: 1500, otherAllowance: 0 },
+    role: UserRole.ADMIN
   },
   // 3. Senior Dev (Non-Saudi) - Expired ID
   {
@@ -66,7 +68,8 @@ const SEED_DATA: Employee[] = [
     district: "Al Malqa",
     iban: "", // Incomplete
     bankName: "Al Rajhi Bank",
-    contract: { basicSalary: 15000, housingAllowance: 3750, transportAllowance: 1000, otherAllowance: 500 }
+    contract: { basicSalary: 15000, housingAllowance: 3750, transportAllowance: 1000, otherAllowance: 500 },
+    role: UserRole.DEPT_MANAGER
   },
   // 4. Accountant (Saudi) - Incomplete
   {
@@ -86,7 +89,8 @@ const SEED_DATA: Employee[] = [
     district: "Al Faisaliyah",
     iban: "", // Incomplete
     bankName: "",
-    contract: { basicSalary: 9000, housingAllowance: 2250, transportAllowance: 800, otherAllowance: 200 }
+    contract: { basicSalary: 9000, housingAllowance: 2250, transportAllowance: 800, otherAllowance: 200 },
+    role: UserRole.DEPT_MANAGER
   },
   // 5. Marketing Spec (Non-Saudi) - Incomplete
   {
@@ -106,7 +110,8 @@ const SEED_DATA: Employee[] = [
     district: "Olaya",
     iban: "",
     bankName: "",
-    contract: { basicSalary: 8000, housingAllowance: 2000, transportAllowance: 600, otherAllowance: 0 }
+    contract: { basicSalary: 8000, housingAllowance: 2000, transportAllowance: 600, otherAllowance: 0 },
+    role: UserRole.DEPT_MANAGER
   },
   // 6. Admin Assistant (Saudi) - Incomplete
   {
@@ -126,7 +131,8 @@ const SEED_DATA: Employee[] = [
     district: "Hittin",
     iban: "",
     bankName: "",
-    contract: { basicSalary: 6000, housingAllowance: 1500, transportAllowance: 500, otherAllowance: 0 }
+    contract: { basicSalary: 6000, housingAllowance: 1500, transportAllowance: 500, otherAllowance: 0 },
+    role: UserRole.EMPLOYEE
   },
   // 7. IT Support (Non-Saudi) - Expired ID
   {
@@ -146,7 +152,8 @@ const SEED_DATA: Employee[] = [
     district: "Al Safa",
     iban: "",
     bankName: "",
-    contract: { basicSalary: 7000, housingAllowance: 1750, transportAllowance: 500, otherAllowance: 0 }
+    contract: { basicSalary: 7000, housingAllowance: 1750, transportAllowance: 500, otherAllowance: 0 },
+    role: UserRole.EMPLOYEE
   },
   // 8. Sales Rep (Saudi) - Incomplete
   {
@@ -167,7 +174,8 @@ const SEED_DATA: Employee[] = [
     iban: "",
     bankName: "",
     avatarUrl: "", // No avatar
-    contract: { basicSalary: 7500, housingAllowance: 1875, transportAllowance: 800, otherAllowance: 1500 } // Commission?
+    contract: { basicSalary: 7500, housingAllowance: 1875, transportAllowance: 800, otherAllowance: 1500 }, // Commission?
+    role: UserRole.DEPT_MANAGER
   },
   // 9. Designer (Non-Saudi) - Incomplete
   {
@@ -187,7 +195,8 @@ const SEED_DATA: Employee[] = [
     district: "Al Narjis",
     iban: "",
     bankName: "",
-    contract: { basicSalary: 11000, housingAllowance: 2750, transportAllowance: 800, otherAllowance: 0 }
+    contract: { basicSalary: 11000, housingAllowance: 2750, transportAllowance: 800, otherAllowance: 0 },
+    role: UserRole.EMPLOYEE
   },
   // 10. Developer (Indian)
   {
@@ -207,7 +216,8 @@ const SEED_DATA: Employee[] = [
     district: "Olaya",
     iban: "SA0000000000000000000002",
     bankName: "Alinma Bank",
-    contract: { basicSalary: 9500, housingAllowance: 2375, transportAllowance: 800, otherAllowance: 0 }
+    contract: { basicSalary: 9500, housingAllowance: 2375, transportAllowance: 800, otherAllowance: 0 },
+    role: UserRole.EMPLOYEE
   },
   // 11. Worker (Bangladeshi)
   {
@@ -227,7 +237,8 @@ const SEED_DATA: Employee[] = [
     district: "Batha",
     iban: "SA0000000000000000000003",
     bankName: "Al Rajhi Bank",
-    contract: { basicSalary: 3500, housingAllowance: 800, transportAllowance: 400, otherAllowance: 0 }
+    contract: { basicSalary: 3500, housingAllowance: 800, transportAllowance: 400, otherAllowance: 0 },
+    role: UserRole.EMPLOYEE
   },
   // 12. Driver (Pakistani)
   {
@@ -247,7 +258,8 @@ const SEED_DATA: Employee[] = [
     district: "Rawdah",
     iban: "SA0000000000000000000004",
     bankName: "SNB",
-    contract: { basicSalary: 4500, housingAllowance: 1125, transportAllowance: 500, otherAllowance: 0 }
+    contract: { basicSalary: 4500, housingAllowance: 1125, transportAllowance: 500, otherAllowance: 0 },
+    role: UserRole.EMPLOYEE
   },
   // 13. Another Saudi
   {
@@ -267,8 +279,9 @@ const SEED_DATA: Employee[] = [
     district: "Malaz",
     iban: "SA0000000000000000000005",
     bankName: "Riyad Bank",
-    contract: { basicSalary: 6000, housingAllowance: 1500, transportAllowance: 500, otherAllowance: 1000 }
-  }
+    contract: { basicSalary: 6000, housingAllowance: 1500, transportAllowance: 500, otherAllowance: 1000 },
+    role: UserRole.EMPLOYEE
+  },
 ];
 
 // SEED DATA: Requests

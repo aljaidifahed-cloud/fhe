@@ -1,5 +1,6 @@
 import React from 'react';
-import { Page } from '../types';
+import { Page, Permission } from '../types';
+import { hasPermission } from '../utils/rbac'; // Import Helper
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 import { ThemeToggle } from './ThemeToggle';
@@ -63,13 +64,23 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentPage, onNavigate, onLog
   // Admin (Fahad, 10001) sees everything
   // Others see only what they have permission for (plus Dashboard/Profile)
   const filteredMenuItems = menuItems.filter(item => {
-    if (currentUser?.id === '10001') return true;
-
-    // Always allowed pages
+    // Always Allowed
     if (item.id === Page.DASHBOARD || item.id === Page.PROFILE) return true;
+    if (item.id === Page.REQUESTS || item.id === Page.INBOX) return true; // Everyone can see generic requests (view filtered inside)
+    if (item.id === Page.MY_WARNINGS) return true;
 
-    // Check granular permission
-    return currentUser?.permissions?.[item.id] === true;
+    // Specific Mapping
+    const permissions = currentUser?.permissions;
+    switch (item.id) {
+      case Page.EMPLOYEES: return hasPermission(permissions, Permission.VIEW_ALL_EMPLOYEES) || hasPermission(permissions, Permission.MANAGE_DEPT_EMPLOYEES);
+      case Page.ORG_CHART: return hasPermission(permissions, Permission.VIEW_ORG_CHART);
+      case Page.PAYROLL: return hasPermission(permissions, Permission.MANAGE_PAYROLL) || hasPermission(permissions, Permission.VIEW_SALARIES);
+      case Page.PERMISSIONS: return hasPermission(permissions, Permission.MANAGE_ALL_EMPLOYEES); // Or specific permission
+      case Page.WARNINGS_COMMITMENTS: return hasPermission(permissions, Permission.MANAGE_WARNINGS);
+      case Page.PRIVATE: return false; // Placeholder
+      case Page.ARCHITECTURE: return false; // Placeholder
+      default: return true;
+    }
   });
 
   const toggleLanguage = () => {

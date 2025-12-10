@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { getEmployees } from '../services/mockService';
-import { Employee, NationalityType, Page } from '../types';
+import { Employee, NationalityType, Page, Permission } from '../types';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
+import { hasPermission } from '../utils/rbac';
 import { UserPlusIcon, PencilSquareIcon, ArrowPathIcon, ShieldCheckIcon } from '@heroicons/react/24/outline';
 
 interface EmployeesProps {
@@ -15,7 +16,10 @@ export const Employees: React.FC<EmployeesProps> = ({ onNavigate, onEdit }) => {
   const [loading, setLoading] = useState<boolean>(true);
   const { t } = useLanguage();
   const { currentUser } = useAuth();
-  const isAdmin = currentUser?.id === '10001';
+  // Permission checks
+  const canAdd = hasPermission(currentUser?.permissions, Permission.MANAGE_ALL_EMPLOYEES);
+  const canEditAll = hasPermission(currentUser?.permissions, Permission.MANAGE_ALL_EMPLOYEES);
+  const canEditDept = hasPermission(currentUser?.permissions, Permission.MANAGE_DEPT_EMPLOYEES);
 
   // Fetch on Mount: "Database-First"
   useEffect(() => {
@@ -61,7 +65,7 @@ export const Employees: React.FC<EmployeesProps> = ({ onNavigate, onEdit }) => {
           <h2 className="text-3xl font-bold text-black dark:text-white transition-colors">{t('employee_directory')}</h2>
           <p className="text-slate-500 dark:text-slate-400 text-sm">{t('manage_files')}</p>
         </div>
-        {isAdmin && (
+        {canAdd && (
           <button
             onClick={() => onNavigate(Page.ADD_EMPLOYEE)}
             className="flex items-center space-x-2 rtl:space-x-reverse px-4 py-2 bg-emerald-600 rounded-lg text-sm font-medium text-white hover:bg-emerald-700 shadow-sm transition-colors"
@@ -140,8 +144,9 @@ export const Employees: React.FC<EmployeesProps> = ({ onNavigate, onEdit }) => {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-end text-sm font-medium">
-                      {isAdmin && (
-                        <div className="flex justify-end space-x-2 rtl:space-x-reverse">
+                      <div className="flex justify-end space-x-2 rtl:space-x-reverse">
+                        {/* Permissions Button: Only Admins/Managers */}
+                        {canEditAll && (
                           <button
                             onClick={() => onNavigate(Page.PERMISSIONS)}
                             className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
@@ -149,6 +154,10 @@ export const Employees: React.FC<EmployeesProps> = ({ onNavigate, onEdit }) => {
                           >
                             <ShieldCheckIcon className="w-5 h-5" />
                           </button>
+                        )}
+
+                        {/* Edit Button: Admins OR Dept Managers (if in same dept? - logical simplification: if they have edit rights) */}
+                        {(canEditAll || canEditDept) && (
                           <button
                             onClick={() => onEdit && onEdit(emp.id)}
                             className="text-emerald-600 hover:text-emerald-900 dark:text-emerald-400 dark:hover:text-emerald-300"
@@ -156,8 +165,8 @@ export const Employees: React.FC<EmployeesProps> = ({ onNavigate, onEdit }) => {
                           >
                             <PencilSquareIcon className="w-5 h-5" />
                           </button>
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -166,6 +175,6 @@ export const Employees: React.FC<EmployeesProps> = ({ onNavigate, onEdit }) => {
           </table>
         )}
       </div>
-    </div>
+    </div >
   );
 };

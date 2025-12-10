@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Employee } from '../types';
 import { getEmployeeById } from '../services/mockService';
+import { getDefaultPermissions } from '../utils/rbac'; // Import RBAC
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -32,7 +33,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         console.log("[Auth] User fetch result:", user);
 
         if (user) {
-          setCurrentUser(user);
+          // --- RBAC INJECTION ---
+          // Dynamically assign permissions based on role
+          const computedPermissions = getDefaultPermissions(user.role);
+          const userWithPermissions = {
+            ...user,
+            permissions: computedPermissions
+          };
+
+          setCurrentUser(userWithPermissions);
           setIsAuthenticated(true);
         } else {
           console.warn("[Auth] Token valid but user not found. Logging out.");
