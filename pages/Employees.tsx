@@ -56,8 +56,8 @@ export const Employees: React.FC<EmployeesProps> = ({ onNavigate, onEdit }) => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
+      <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+        <div className="w-full md:w-auto">
           <h2 className="text-3xl font-bold text-black dark:text-white transition-colors">{t('employee_directory')}</h2>
           <p className="text-slate-500 dark:text-slate-400 text-sm">{t('manage_files')}</p>
         </div>
@@ -72,7 +72,7 @@ export const Employees: React.FC<EmployeesProps> = ({ onNavigate, onEdit }) => {
         )}
       </div>
 
-      <div className="bg-white dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden transition-colors">
+      <div className="bg-white dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700 rounded-xl overflow-x-auto transition-colors">
         {loading ? (
           <div className="p-12 flex flex-col items-center justify-center text-slate-500 dark:text-slate-400">
             <ArrowPathIcon className="w-8 h-8 animate-spin mb-2" />

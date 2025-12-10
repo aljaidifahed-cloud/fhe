@@ -122,8 +122,8 @@ export const Payroll: React.FC = () => {
 
   return (
     <div className="space-y-6 relative">
-      <div className="flex justify-between items-center">
-        <div>
+      <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+        <div className="w-full md:w-auto">
           <h2 className="text-2xl font-bold text-black dark:text-white">{t('payroll_processing')}</h2>
           <p className="text-slate-500 text-sm">{t('working_days')}</p>
         </div>

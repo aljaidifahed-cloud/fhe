@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { Bars3Icon } from '@heroicons/react/24/outline'; // New Import
+import { MoonLogo } from './components/MoonLogo'; // New Import
 import { Sidebar } from './components/Sidebar';
 import { Dashboard } from './pages/Dashboard';
 import { Employees } from './pages/Employees';
@@ -30,6 +32,7 @@ const AppContent: React.FC = () => {
   const [showLogin, setShowLogin] = useState(false);
   const [currentPage, setCurrentPage] = useState<Page>(Page.DASHBOARD);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false); // New State
   const { currentUser } = useAuth(); // Ensure we have currentUser
 
   // Enforce Permissions on Routing
@@ -110,16 +113,40 @@ const AppContent: React.FC = () => {
         <YouTubeBackground />
 
         {/* Content Layer */}
-        <div className="relative z-10 h-screen flex flex-col">
+        <div className="relative z-10 h-screen flex flex-col transition-all duration-300">
           <ProtectedRoute fallback={UnauthenticatedView}>
-            <div className="flex h-screen overflow-hidden">
+
+            {/* Mobile Header */}
+            <header className="md:hidden bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200 dark:border-white/10 p-4 flex items-center justify-between z-20 sticky top-0">
+              <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                <div className="w-8 h-8">
+                  <MoonLogo className="w-full h-full" />
+                </div>
+                <h1 className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-600 to-cyan-600 dark:from-emerald-400 dark:to-cyan-400">
+                  MOON HR
+                </h1>
+              </div>
+              <button
+                onClick={() => setIsSidebarOpen(true)}
+                className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 transition-colors"
+              >
+                <Bars3Icon className="w-6 h-6" />
+              </button>
+            </header>
+
+            <div className="flex flex-1 overflow-hidden">
               <Sidebar
                 currentPage={currentPage}
-                onNavigate={setCurrentPage}
+                onNavigate={(page) => {
+                  setCurrentPage(page);
+                  setIsSidebarOpen(false); // Close sidebar on nav
+                }}
                 onLogout={handleLogout}
+                isOpen={isSidebarOpen}
+                onClose={() => setIsSidebarOpen(false)}
               />
               {/* Glassmorphism Effect for Main Content Area */}
-              <main className="flex-1 overflow-y-auto bg-slate-50/20 dark:bg-slate-950/20 backdrop-blur-sm p-8 transition-colors duration-300">
+              <main className="flex-1 overflow-y-auto bg-slate-50/20 dark:bg-slate-950/20 backdrop-blur-sm p-4 md:p-8 transition-colors duration-300 w-full">
                 <div className="max-w-7xl mx-auto h-full flex flex-col">
                   <div key={currentPage} className="animate-page-enter h-full">
                     {(() => {

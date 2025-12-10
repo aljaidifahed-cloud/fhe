@@ -71,7 +71,7 @@ export const Requests: React.FC = () => {
 
     return (
         <div className="space-y-6">
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col md:flex-row justify-between items-center gap-4">
                 <div>
                     <h2 className="text-3xl font-bold text-black dark:text-white">{t('req_center')}</h2>
                     <p className="text-slate-500 dark:text-slate-400 mt-1">{t('req_subtitle')}</p>
@@ -86,8 +86,8 @@ export const Requests: React.FC = () => {
             </div>
 
             {/* Tabs */}
-            <div className="border-b border-slate-200 dark:border-slate-700">
-                <nav className="-mb-px flex space-x-8 rtl:space-x-reverse" aria-label="Tabs">
+            <div className="border-b border-slate-200 dark:border-slate-700 overflow-x-auto">
+                <nav className="-mb-px flex space-x-8 rtl:space-x-reverse min-w-max" aria-label="Tabs">
                     {[
                         { id: 'ALL', name: t('req_tab_all') },
                         { id: 'PENDING', name: t('req_tab_pending') },
