@@ -175,6 +175,8 @@ export const translations = {
     verified: "Verified",
     remote: "Remote",
     on_time: "On Time",
+    error_outside_range: "You are outside the allowed range to clock in/out.",
+
 
     // Profile
     profile_title: "My Profile",
@@ -191,6 +193,36 @@ export const translations = {
     btn_save_changes: "Save Changes",
     msg_saving: "Saving Changes...",
     msg_profile_updated: "Profile updated successfully!",
+
+    // Profile - Additional Keys
+    request_leave: "Request Leave",
+    settings: "Settings",
+    overview: "Overview",
+    job_info: "Job Info",
+    documents: "Documents",
+    assets: "Assets",
+    deductions_benefits: "Deductions & Benefits",
+    benefits: "Benefits",
+    deductions: "Deductions",
+    allowances: "Allowances",
+    other: "Other",
+    leaves_balance: "Leaves Balance",
+    view_history: "View History",
+    days_available: "Days Available",
+    salary_breakdown: "Salary Breakdown",
+    total_salary: "Total Salary",
+    basic_details: "Basic Details",
+    join_date: "Join Date",
+    contact_info: "Contact Info",
+    contract_status: "Contract Status",
+    valid: "Valid",
+    contract_type: "Contract Type",
+    start_date: "Start Date",
+    end_date: "End Date",
+    probation: "Probation",
+    probation_ended: "Ended",
+    org_hierarchy_title: "Organization Hierarchy",
+    manager_role: "Manager",
 
     // Architecture
     sys_arch: "System Architecture Specification",
@@ -652,6 +684,8 @@ export const translations = {
     verified: "تم التحقق",
     remote: "عن بعد",
     on_time: "في الوقت المحدد",
+    error_outside_range: "أنت خارج النطاق المسموح به لتسجيل الدخول/الخروج.",
+
 
     // Profile
     profile_title: "ملفي الشخصي",
@@ -668,6 +702,37 @@ export const translations = {
     btn_save_changes: "حفظ التغييرات",
     msg_saving: "جاري الحفظ...",
     msg_profile_updated: "تم تحديث الملف الشخصي بنجاح!",
+
+    // Profile - Additional Keys
+    request_leave: "طلب إجازة",
+    settings: "الإعدادات",
+    overview: "نظرة عامة",
+    job_info: "معلومات الوظيفة",
+    documents: "المستندات",
+    assets: "العهد",
+    deductions_benefits: "الاستقطاعات والبدلات",
+    benefits: "المزايا",
+    deductions: "الاستقطاعات",
+    allowances: "البدلات",
+    other: "أخرى",
+    leaves_balance: "رصيد الإجازات",
+    view_history: "عرض السجل",
+    days_available: "أيام متاحة",
+    salary_breakdown: "تفاصيل الراتب",
+    total_salary: "إجمالي الراتب",
+    basic_details: "البيانات الأساسية",
+    // edit: "تعديل", // Already in 'edit' key
+    join_date: "تاريخ الالتحاق",
+    contact_info: "معلومات الاتصال",
+    contract_status: "حالة العقد",
+    valid: "ساري",
+    contract_type: "نوع العقد",
+    start_date: "تاريخ البدء",
+    end_date: "تاريخ الانتهاء",
+    probation: "فترة التجربة",
+    probation_ended: "انتهت",
+    org_hierarchy_title: "الهيكل التنظيمي",
+    manager_role: "مدير",
 
     // Architecture
     sys_arch: "مواصفات هيكلة النظام",

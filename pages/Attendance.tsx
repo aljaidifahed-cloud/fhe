@@ -4,8 +4,6 @@ import { MapPinIcon, ClockIcon, CheckCircleIcon, XCircleIcon } from '@heroicons/
 import { OvertimeCalculator } from '../components/OvertimeCalculator';
 import { TimesheetUploader } from '../components/TimesheetUploader';
 
-
-
 export const Attendance: React.FC = () => {
     const { t, language } = useLanguage();
     const [time, setTime] = useState(new Date());
@@ -25,9 +23,87 @@ export const Attendance: React.FC = () => {
         { id: 8, date: new Date().toISOString().split('T')[0], time: '05:00 PM', type: 'OUT', verified: true, statusType: 'NONE' }
     ]);
 
+    // --- Geolocation State ---
+    interface SavedLocation {
+        id: string;
+        name: string;
+        lat: number;
+        lng: number;
+        radius: number;
+    }
+
+    const [savedLocations, setSavedLocations] = useState<SavedLocation[]>(() => {
+        try {
+            const saved = localStorage.getItem('attendance_locations');
+            return saved ? JSON.parse(saved) : [{
+                id: 'default',
+                name: 'Main Office',
+                lat: 24.725902,
+                lng: 46.726207,
+                radius: 500
+            }];
+        } catch (e) {
+            return [{ id: 'default', name: 'Main Office', lat: 24.725902, lng: 46.726207, radius: 500 }];
+        }
+    });
+
+    const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+    const [currentDistance, setCurrentDistance] = useState<number | null>(null); // To nearest valid location
+    const [locationError, setLocationError] = useState<string | null>(null);
+    const [isDevBypass, setIsDevBypass] = useState(false);
+
+    // New Location Form State
+    const [newLocName, setNewLocName] = useState('');
+    const [newLocUrl, setNewLocUrl] = useState('');
+    const [newLocRadius, setNewLocRadius] = useState(500);
+
     // Simulation State
     const [isCheckedIn, setIsCheckedIn] = useState(false);
-    const [isWithinRange, setIsWithinRange] = useState(true);
+
+    // Helper to extract Lat/Lng from Google Maps URL
+    const parseMapsUrl = (url: string) => {
+        const atRegex = /@(-?\d+\.\d+),(-?\d+\.\d+)/;
+        const atMatch = url.match(atRegex);
+        if (atMatch) return { lat: parseFloat(atMatch[1]), lng: parseFloat(atMatch[2]) };
+
+        const queryRegex = /(?:q|query)=(-?\d+\.\d+),(-?\d+\.\d+)/;
+        const queryMatch = url.match(queryRegex);
+        if (queryMatch) return { lat: parseFloat(queryMatch[1]), lng: parseFloat(queryMatch[2]) };
+
+        const llRegex = /(?:ll)=(-?\d+\.\d+),(-?\d+\.\d+)/;
+        const llMatch = url.match(llRegex);
+        if (llMatch) return { lat: parseFloat(llMatch[1]), lng: parseFloat(llMatch[2]) };
+
+        return null;
+    };
+
+    // Haversine formula
+    const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+        const R = 6371e3; // metres
+        const φ1 = lat1 * Math.PI / 180;
+        const φ2 = lat2 * Math.PI / 180;
+        const Δφ = (lat2 - lat1) * Math.PI / 180;
+        const Δλ = (lon2 - lon1) * Math.PI / 180;
+
+        const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+            Math.cos(φ1) * Math.cos(φ2) *
+            Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+        return R * c;
+    };
+
+    // Derived state
+    const isWithinRange = isDevBypass || savedLocations.some(loc => {
+        if (!userLocation) return false;
+        const dist = calculateDistance(userLocation.lat, userLocation.lng, loc.lat, loc.lng);
+        return dist <= loc.radius;
+    });
+
+    // Save locations to local storage
+    useEffect(() => {
+        localStorage.setItem('attendance_locations', JSON.stringify(savedLocations));
+    }, [savedLocations]);
 
     // Live Clock
     useEffect(() => {
@@ -35,7 +111,80 @@ export const Attendance: React.FC = () => {
         return () => clearInterval(timer);
     }, []);
 
+    const handleAddLocation = () => {
+        const coords = parseMapsUrl(newLocUrl);
+        if (!coords && !userLocation) {
+            alert("Please provide a valid Google Maps URL or wait for GPS to set current location.");
+            return;
+        }
+
+        const finalCoords = coords || userLocation!;
+
+        const newLocation: SavedLocation = {
+            id: Date.now().toString(),
+            name: newLocName || `Location ${savedLocations.length + 1}`,
+            lat: finalCoords.lat,
+            lng: finalCoords.lng,
+            radius: newLocRadius
+        };
+
+        setSavedLocations([...savedLocations, newLocation]);
+        setNewLocName('');
+        setNewLocUrl('');
+        setNewLocRadius(500);
+    };
+
+    const handleDeleteLocation = (id: string) => {
+        if (confirm('Are you sure you want to delete this location?')) {
+            setSavedLocations(savedLocations.filter(loc => loc.id !== id));
+        }
+    };
+
+    useEffect(() => {
+        if (!navigator.geolocation) {
+            setLocationError('Geolocation is not supported by your browser');
+            return;
+        }
+
+        const watchId = navigator.geolocation.watchPosition(
+            (position) => {
+                const { latitude, longitude } = position.coords;
+                setUserLocation({ lat: latitude, lng: longitude });
+                setLocationError(null);
+            },
+            (error) => {
+                setLocationError(error.message);
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 5000,
+                maximumAge: 0
+            }
+        );
+
+        return () => navigator.geolocation.clearWatch(watchId);
+    }, []);
+
+    // Update nearest distance for UI status
+    useEffect(() => {
+        if (userLocation && savedLocations.length > 0) {
+            let minDistance = Infinity;
+            savedLocations.forEach(loc => {
+                const dist = calculateDistance(userLocation.lat, userLocation.lng, loc.lat, loc.lng);
+                if (dist < minDistance) minDistance = dist;
+            });
+            setCurrentDistance(minDistance === Infinity ? null : minDistance);
+        } else {
+            setCurrentDistance(null);
+        }
+    }, [userLocation, savedLocations]);
+
     const handleCheckAction = () => {
+        if (!isWithinRange) {
+            alert(t('error_outside_range') || "You are outside the allowed range to clock in/out.");
+            return;
+        }
+
         const type = isCheckedIn ? 'OUT' : 'IN';
         const todayStr = new Date().toLocaleDateString('en-CA');
         const newLog = {
@@ -43,12 +192,12 @@ export const Attendance: React.FC = () => {
             date: todayStr,
             time: new Date().toLocaleTimeString(language === 'ar' ? 'ar-SA' : 'en-US', { hour: '2-digit', minute: '2-digit' }),
             type,
-            verified: isWithinRange,
-            statusType: type === 'IN' ? (isWithinRange ? 'ON_TIME' : 'REMOTE') : 'NONE'
+            verified: true,
+            statusType: type === 'IN' ? 'ON_TIME' : 'NONE'
         };
         setLogs([newLog, ...logs]);
         setIsCheckedIn(!isCheckedIn);
-        setSelectedDate(new Date()); // Auto-select today
+        setSelectedDate(new Date());
     };
 
     // Calendar Helper Functions
@@ -82,7 +231,7 @@ export const Attendance: React.FC = () => {
         return logDate.getDate() === selectedDate.getDate() &&
             logDate.getMonth() === selectedDate.getMonth() &&
             logDate.getFullYear() === selectedDate.getFullYear();
-    }).sort((a, b) => a.time.localeCompare(b.time)); // Sort by time roughly
+    }).sort((a, b) => a.time.localeCompare(b.time));
 
     const changeMonth = (offset: number) => {
         const newDate = new Date(viewDate.getFullYear(), viewDate.getMonth() + offset, 1);
@@ -90,8 +239,6 @@ export const Attendance: React.FC = () => {
     };
 
     const hasLog = (date: Date) => {
-        const dateStr = date.toISOString().split('T')[0]; // Simple check, might need timezone adjustment in real app
-        // Or better:
         return logs.some(log => {
             const logD = new Date(log.date);
             return logD.getDate() === date.getDate() && logD.getMonth() === date.getMonth() && logD.getFullYear() === date.getFullYear();
@@ -142,9 +289,11 @@ export const Attendance: React.FC = () => {
                         <div className="w-48 h-48 rounded-full border-4 border-slate-100 flex items-center justify-center relative bg-slate-50">
                             <button
                                 onClick={handleCheckAction}
-                                className={`w-40 h-40 rounded-full flex flex-col items-center justify-center shadow-lg transition-all transform active:scale-95 ${isCheckedIn
-                                    ? 'bg-red-500 hover:bg-red-600 text-white'
-                                    : 'bg-emerald-500 hover:bg-emerald-600 text-white'
+                                disabled={!isWithinRange}
+                                className={`w-40 h-40 rounded-full flex flex-col items-center justify-center shadow-lg transition-all transform active:scale-95 
+                                    ${!isWithinRange
+                                        ? 'bg-slate-400 cursor-not-allowed opacity-75'
+                                        : (isCheckedIn ? 'bg-red-500 hover:bg-red-600 text-white' : 'bg-emerald-500 hover:bg-emerald-600 text-white')
                                     }`}
                             >
                                 <ClockIcon className="w-10 h-10 mb-2" />
@@ -153,26 +302,135 @@ export const Attendance: React.FC = () => {
                                 </span>
                             </button>
                         </div>
+                        {/* Distance Indicator for User Feedback */}
+                        <div className="text-xs font-mono text-slate-400">
+                            {currentDistance !== null ? `~${Math.round(currentDistance)}m from nearest zone` : 'Locating...'}
+                        </div>
                     </div>
 
-                    {/* Location Status */}
-                    <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
-                        <div className="flex justify-between items-center mb-4">
+                    {/* Location Status & Settings */}
+                    <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 space-y-4">
+                        <div className="flex justify-between items-center mb-2">
                             <h3 className="font-bold text-black dark:text-white">{t('location_status')}</h3>
-                            <button
-                                onClick={() => setIsWithinRange(!isWithinRange)}
-                                className={`px-3 py-1 text-xs rounded-full border ${isWithinRange ? 'bg-emerald-100 border-emerald-200 text-emerald-800' : 'bg-slate-100 text-slate-500'}`}
-                            >
-                                {t('simulation')}
-                            </button>
+                            <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                                <label className="text-[10px] text-slate-400 uppercase tracking-wider font-bold">Dev Bypass</label>
+                                <input
+                                    type="checkbox"
+                                    checked={isDevBypass}
+                                    onChange={(e) => setIsDevBypass(e.target.checked)}
+                                    className="accent-emerald-500 w-4 h-4"
+                                />
+                            </div>
                         </div>
+
                         <div className="flex items-center space-x-4 rtl:space-x-reverse">
                             <div className={`p-3 rounded-full ${isWithinRange ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'}`}>
                                 {isWithinRange ? <CheckCircleIcon className="w-6 h-6" /> : <XCircleIcon className="w-6 h-6" />}
                             </div>
-                            <p className={`font-bold ${isWithinRange ? 'text-emerald-700' : 'text-red-700'}`}>
-                                {isWithinRange ? t('inside_range') : t('outside_range')}
-                            </p>
+                            <div className="flex-1">
+                                <p className={`font-bold ${isWithinRange ? 'text-emerald-700' : 'text-red-700'}`}>
+                                    {isWithinRange ? t('inside_range') : t('outside_range')}
+                                </p>
+                                <p className="text-xs text-slate-500 mt-1">
+                                    {savedLocations.length > 0 ? `${savedLocations.length} Active Zones` : 'No Zones Configured'}
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Admin/Settings Section */}
+                        <div className="pt-4 mt-4 border-t border-slate-100 dark:border-slate-700">
+                            <details className="text-xs">
+                                <summary className="cursor-pointer text-slate-400 hover:text-emerald-500 font-medium mb-2 transition-colors">
+                                    Conf. Location Settings
+                                </summary>
+                                <div className="space-y-4 pt-2">
+                                    {/* Add New Location Form */}
+                                    <div className="bg-slate-50 dark:bg-slate-700/50 p-3 rounded border border-slate-100 dark:border-slate-600">
+                                        <p className="font-bold mb-2 text-slate-600 dark:text-slate-300">Add New Workplace</p>
+                                        <div className="space-y-2">
+                                            <input
+                                                className="w-full bg-white dark:bg-slate-600 border border-slate-200 dark:border-slate-500 rounded px-2 py-1"
+                                                placeholder="Location Name (e.g. Branch A)"
+                                                value={newLocName}
+                                                onChange={e => setNewLocName(e.target.value)}
+                                            />
+                                            <input
+                                                className="w-full bg-white dark:bg-slate-600 border border-slate-200 dark:border-slate-500 rounded px-2 py-1"
+                                                placeholder="Google Maps URL"
+                                                value={newLocUrl}
+                                                onChange={e => setNewLocUrl(e.target.value)}
+                                            />
+                                            <div className="flex items-center gap-2">
+                                                <input
+                                                    type="number"
+                                                    className="w-20 bg-white dark:bg-slate-600 border border-slate-200 dark:border-slate-500 rounded px-2 py-1"
+                                                    placeholder="Radius"
+                                                    value={newLocRadius}
+                                                    onChange={e => setNewLocRadius(parseFloat(e.target.value))}
+                                                />
+                                                <span className="text-slate-500">meters</span>
+                                                <div className="flex-1"></div>
+                                                <button
+                                                    onClick={handleAddLocation}
+                                                    className="bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1 rounded transition-colors"
+                                                >
+                                                    Add
+                                                </button>
+                                            </div>
+                                            <button
+                                                onClick={() => {
+                                                    if (userLocation) {
+                                                        const newLocation: SavedLocation = {
+                                                            id: Date.now().toString(),
+                                                            name: newLocName || `Current Loc ${savedLocations.length + 1}`,
+                                                            lat: userLocation.lat,
+                                                            lng: userLocation.lng,
+                                                            radius: newLocRadius
+                                                        };
+                                                        setSavedLocations([...savedLocations, newLocation]);
+                                                        setNewLocName('');
+                                                    } else {
+                                                        alert("Waiting for GPS...");
+                                                    }
+                                                }}
+                                                className="text-emerald-600 hover:text-emerald-700 underline text-[10px]"
+                                            >
+                                                Use Current GPS Location
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* Locations List */}
+                                    <div className="space-y-2">
+                                        {savedLocations.map(loc => {
+                                            const dist = userLocation ? calculateDistance(userLocation.lat, userLocation.lng, loc.lat, loc.lng) : null;
+                                            const isInside = dist !== null && dist <= loc.radius;
+
+                                            return (
+                                                <div key={loc.id} className="flex justify-between items-center bg-white dark:bg-slate-800 p-2 rounded border border-slate-100 dark:border-slate-600">
+                                                    <div>
+                                                        <p className="font-bold text-slate-700 dark:text-slate-200">{loc.name}</p>
+                                                        <p className="text-[10px] text-slate-400">
+                                                            {loc.lat.toFixed(4)}, {loc.lng.toFixed(4)} | R: {loc.radius}m
+                                                        </p>
+                                                        {dist !== null && (
+                                                            <p className={`text-[10px] ${isInside ? 'text-emerald-500 font-bold' : 'text-slate-400'}`}>
+                                                                {Math.round(dist)}m away {isInside ? '(Inside)' : ''}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                    <button
+                                                        onClick={() => handleDeleteLocation(loc.id)}
+                                                        className="text-red-400 hover:text-red-500 p-1"
+                                                    >
+                                                        <XCircleIcon className="w-5 h-5" />
+                                                    </button>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            </details>
                         </div>
                     </div>
 
