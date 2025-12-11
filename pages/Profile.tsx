@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 import { Page } from '../types';
-import { updateMyProfile } from '../services/mockService';
+import { updateMyProfile, getEmployeeById, getEmployees } from '../services/mockService';
+import { Employee } from '../types';
 import {
     UserCircleIcon,
     CameraIcon,
@@ -35,6 +36,43 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigate }) => {
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
     const [successMsg, setSuccessMsg] = useState('');
+
+    // Org Chart State
+    const [manager, setManager] = useState<Employee | null>(null);
+    const [subordinates, setSubordinates] = useState<Employee[]>([]);
+
+    useEffect(() => {
+        const fetchOrgRelations = async () => {
+            if (!currentUser) return;
+
+            // Fetch Manager
+            if (currentUser.managerId) {
+                const mgr = await getEmployeeById(currentUser.managerId);
+                setManager(mgr || null);
+            } else {
+                setManager(null);
+            }
+
+            // Fetch Subordinates (Recursive)
+            const allEmployees = await getEmployees();
+
+            const getAllDescendants = (managerId: string, allEmps: Employee[]): Employee[] => {
+                const directReports = allEmps.filter(e => e.managerId === managerId);
+                let descendants = [...directReports];
+
+                directReports.forEach(report => {
+                    const subDescendants = getAllDescendants(report.id, allEmps);
+                    descendants = [...descendants, ...subDescendants];
+                });
+
+                return descendants;
+            };
+
+            const subs = getAllDescendants(currentUser.id, allEmployees);
+            setSubordinates(subs);
+        };
+        fetchOrgRelations();
+    }, [currentUser]);
 
     useEffect(() => {
         if (currentUser) {
@@ -80,26 +118,41 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigate }) => {
 
     if (!currentUser) return <div className="p-10 flex justify-center"><ArrowPathIcon className="w-8 h-8 animate-spin text-emerald-500" /></div>;
 
-    // Mock Data for Lists
+    // Dynamic Data for Lists
     const leaveBalances = [
         { type: 'leave_annual', days: 30, color: 'bg-emerald-500' },
         { type: 'leave_sick', days: 15, color: 'bg-blue-500' },
         { type: 'leave_unpaid', days: 0, color: 'bg-slate-400' }
     ];
 
+    const basicSalary = currentUser.contract?.basicSalary || 0;
+    const housing = currentUser.contract?.housingAllowance || 0;
+    const transport = currentUser.contract?.transportAllowance || 0;
+    const other = currentUser.contract?.otherAllowance || 0;
+    const totalSalary = basicSalary + housing + transport + other;
+
     const salaryComponents = [
-        { label: 'lbl_basic_salary', value: '15,000 SAR' },
-        { label: 'lbl_housing', value: '3,750 SAR' },
-        { label: 'lbl_transport', value: '1,500 SAR' },
-        { label: 'lbl_other_allowance', value: '0 SAR' }
+        { label: 'lbl_basic_salary', value: `${basicSalary.toLocaleString()} SAR` },
+        { label: 'lbl_housing', value: `${housing.toLocaleString()} SAR` },
+        { label: 'lbl_transport', value: `${transport.toLocaleString()} SAR` },
+        { label: 'lbl_other_allowance', value: `${other.toLocaleString()} SAR` }
     ];
 
+    // Infer contract end date (e.g., 2 years from join date) for demo purposes
+    const joinDateObj = new Date(currentUser.joinDate);
+    const contractEndDate = new Date(joinDateObj);
+    contractEndDate.setFullYear(contractEndDate.getFullYear() + 2);
+
+    // Probation often 3 months
+    const probationDate = new Date(joinDateObj);
+    probationDate.setMonth(probationDate.getMonth() + 3);
+
     const contractDetails = {
-        startDate: '01/01/2023',
-        endDate: '01/01/2025',
-        type: 'Full Time',
+        startDate: currentUser.joinDate,
+        endDate: contractEndDate.toISOString().split('T')[0],
+        type: 'Full Time', // Default as per types
         status: 'Active',
-        probationEnd: '01/04/2023'
+        probationEnd: probationDate.toISOString().split('T')[0]
     };
 
     return (
@@ -229,7 +282,7 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigate }) => {
                                 ))}
                                 <div className="flex justify-between py-3 border-t-2 border-slate-100 dark:border-slate-600 mt-2 bg-slate-50 dark:bg-slate-700/30 -mx-5 px-5">
                                     <span className="font-bold text-slate-800 dark:text-white">{t('total_salary')}</span>
-                                    <span className="font-mono font-bold text-emerald-600">20,250 SAR</span>
+                                    <span className="font-mono font-bold text-emerald-600">{totalSalary.toLocaleString()} SAR</span>
                                 </div>
                             </div>
                         </div>
@@ -303,38 +356,64 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigate }) => {
 
                             <div className="flex flex-col items-center">
                                 {/* Manager */}
-                                <div className="flex flex-col items-center">
-                                    <div className="w-12 h-12 rounded-full border-2 border-slate-200 bg-slate-50 flex items-center justify-center">
-                                        <UserCircleIcon className="w-8 h-8 text-slate-400" />
+                                {manager ? (
+                                    <div className="flex flex-col items-center">
+                                        <div className="w-12 h-12 rounded-full border-2 border-slate-200 bg-slate-50 flex items-center justify-center overflow-hidden">
+                                            {manager.avatarUrl ? <img src={manager.avatarUrl} className="w-full h-full object-cover" /> : <UserCircleIcon className="w-8 h-8 text-slate-400" />}
+                                        </div>
+                                        <p className="text-xs font-bold mt-1 text-slate-700">{manager.fullName} ({t('manager_role')})</p>
+                                        <div className="h-6 w-px bg-slate-300 my-1"></div>
                                     </div>
-                                    <p className="text-xs font-bold mt-1 text-slate-700">Faisal ({t('manager_role')})</p>
-                                    <div className="h-6 w-px bg-slate-300 my-1"></div>
-                                </div>
+                                ) : (
+                                    <div className="flex flex-col items-center mb-4 text-slate-400">
+                                        <span className="text-xs italic">Top Level</span>
+                                        <div className="h-6 w-px bg-slate-300 my-1"></div>
+                                    </div>
+                                )}
 
                                 {/* Current User */}
-                                <div className="flex flex-col items-center p-3 border border-emerald-200 bg-emerald-50 rounded-lg mb-2">
+                                <div className="flex flex-col items-center p-3 border border-emerald-200 bg-emerald-50 rounded-lg mb-2 relative z-10 w-48 shadow-md">
                                     <div className="w-10 h-10 rounded-full border-2 border-white shadow-sm overflow-hidden bg-slate-200">
                                         {previewUrl ? <img src={previewUrl} className="w-full h-full object-cover" /> : <UserCircleIcon className="w-full h-full text-slate-400" />}
                                     </div>
-                                    <p className="text-sm font-bold mt-1 text-emerald-800">{currentUser.fullName}</p>
+                                    <p className="text-sm font-bold mt-1 text-emerald-800 text-center">{currentUser.fullName}</p>
                                     <p className="text-[10px] text-emerald-600">{currentUser.position}</p>
                                 </div>
 
                                 {/* Subordinates Line */}
-                                <div className="h-6 w-px bg-slate-300 mb-1"></div>
-                                <div className="w-1/2 border-t border-slate-300"></div>
-                                <div className="flex justify-between w-1/2 pt-1">
-                                    <div className="h-3 w-px bg-slate-300"></div>
-                                    <div className="h-3 w-px bg-slate-300"></div>
-                                    <div className="h-3 w-px bg-slate-300"></div>
-                                </div>
-                                <div className="flex gap-4 mt-1">
-                                    {[1, 2, 3].map(i => (
-                                        <div key={i} className="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center">
-                                            <span className="text-[10px] text-slate-500">U{i}</span>
+                                {subordinates.length > 0 && (
+                                    <>
+                                        <div className="h-6 w-px bg-slate-300 mb-1"></div>
+                                        {subordinates.length > 1 && (
+                                            <>
+                                                <div className="w-2/3 border-t border-slate-300"></div>
+                                                <div className="flex justify-between w-2/3 pt-1">
+                                                    {/* Vertical lines connecting to horizontal bar - approximate for simple tree */}
+                                                    {subordinates.map((_, idx) => (
+                                                        <div key={idx} className={`h-3 w-px bg-slate-300 ${idx === 0 || idx === subordinates.length - 1 ? 'visible' : 'invisible'}`}></div>
+                                                    ))}
+                                                </div>
+                                            </>
+                                        )}
+                                        {/* Single subordinate vertical line extension if only 1 */}
+                                        {subordinates.length === 1 && <div className="h-3 w-px bg-slate-300"></div>}
+
+                                        <div className="flex gap-4 mt-4 justify-center flex-wrap px-4">
+                                            {subordinates.map(sub => (
+                                                <div key={sub.id} className="flex flex-col items-center p-2 border border-slate-200 bg-white dark:bg-slate-700/50 rounded-lg w-28 shadow-sm hover:shadow-md transition-shadow">
+                                                    <div className="w-10 h-10 rounded-full border border-slate-100 dark:border-slate-600 bg-slate-50 flex items-center justify-center overflow-hidden mb-2">
+                                                        {sub.avatarUrl ? <img src={sub.avatarUrl} className="w-full h-full object-cover" /> : <span className="text-xs text-slate-500 font-bold">{sub.fullName.charAt(0)}</span>}
+                                                    </div>
+                                                    <p className="text-[10px] font-bold text-slate-700 dark:text-slate-200 text-center leading-tight w-full break-words mb-0.5">{sub.fullName}</p>
+                                                    <p className="text-[9px] text-slate-400 text-center truncate w-full">{sub.position}</p>
+                                                </div>
+                                            ))}
                                         </div>
-                                    ))}
-                                </div>
+                                    </>
+                                )}
+                                {subordinates.length === 0 && (
+                                    <p className="text-xs text-slate-400 mt-4 italic">No direct reports</p>
+                                )}
                             </div>
                         </div>
 

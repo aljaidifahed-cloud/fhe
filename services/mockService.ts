@@ -1,6 +1,6 @@
 import { Employee, NationalityType, ContractType, ServiceRequest, RequestType, RequestStatus, OrgTreeNode, UserRole } from '../types';
 
-const DB_KEY = 'hr_system_db_v6';
+const DB_KEY = 'hr_system_db_v7';
 const REQUESTS_KEY = 'hr_system_requests_v4';
 const WARNINGS_KEY = 'hr_system_warnings_v1';
 const DEDUCTIONS_KEY = 'hr_system_deductions_v1';
