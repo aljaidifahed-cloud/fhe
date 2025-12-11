@@ -38,38 +38,44 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigate }) => {
     const [successMsg, setSuccessMsg] = useState('');
 
     // Org Chart State
-    const [manager, setManager] = useState<Employee | null>(null);
+    const [managersChain, setManagersChain] = useState<Employee[]>([]);
     const [subordinates, setSubordinates] = useState<Employee[]>([]);
 
     useEffect(() => {
         const fetchOrgRelations = async () => {
             if (!currentUser) return;
 
-            // Fetch Manager
-            if (currentUser.managerId) {
-                const mgr = await getEmployeeById(currentUser.managerId);
-                setManager(mgr || null);
-            } else {
-                setManager(null);
-            }
-
-            // Fetch Subordinates (Recursive)
             const allEmployees = await getEmployees();
 
-            const getAllDescendants = (managerId: string, allEmps: Employee[]): Employee[] => {
+            // Build Manager Chain (Upward)
+            const chain: Employee[] = [];
+            let currentMgrId = currentUser.managerId;
+            let safety = 0;
+            while (currentMgrId && safety < 50) {
+                const mgr = allEmployees.find(e => e.id === currentMgrId);
+                if (mgr) {
+                    chain.unshift(mgr);
+                    currentMgrId = mgr.managerId;
+                } else {
+                    break;
+                }
+                safety++;
+            }
+            setManagersChain(chain);
+
+            const buildTree = (managerId: string, allEmps: Employee[]): any[] => {
+                // Find direct reports
                 const directReports = allEmps.filter(e => e.managerId === managerId);
-                let descendants = [...directReports];
 
-                directReports.forEach(report => {
-                    const subDescendants = getAllDescendants(report.id, allEmps);
-                    descendants = [...descendants, ...subDescendants];
-                });
-
-                return descendants;
+                // For each direct report, recursively find their reports
+                return directReports.map(emp => ({
+                    ...emp,
+                    children: buildTree(emp.id, allEmps)
+                }));
             };
 
-            const subs = getAllDescendants(currentUser.id, allEmployees);
-            setSubordinates(subs);
+            const subordinateTree = buildTree(currentUser.id, allEmployees);
+            setSubordinates(subordinateTree);
         };
         fetchOrgRelations();
     }, [currentUser]);
@@ -196,7 +202,7 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigate }) => {
                     </div>
 
                     {/* Tabs */}
-                    <div className="flex border-b border-slate-200 dark:border-slate-700 space-x-6 rtl:space-x-reverse overflow-x-auto">
+                    <div className="flex border-b border-slate-200 dark:border-slate-700 space-x-6 rtl:space-x-reverse overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
                         {['Overview', 'Personal Info', 'Job Info', 'Documents', 'Assets'].map((tab) => (
                             <button
                                 key={tab}
@@ -355,15 +361,21 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigate }) => {
                             <h3 className="font-bold text-slate-800 dark:text-white mb-6">{t('org_hierarchy_title')}</h3>
 
                             <div className="flex flex-col items-center">
-                                {/* Manager */}
-                                {manager ? (
-                                    <div className="flex flex-col items-center">
-                                        <div className="w-12 h-12 rounded-full border-2 border-slate-200 bg-slate-50 flex items-center justify-center overflow-hidden">
-                                            {manager.avatarUrl ? <img src={manager.avatarUrl} className="w-full h-full object-cover" /> : <UserCircleIcon className="w-8 h-8 text-slate-400" />}
+                                {/* Managers Chain (Upward) */}
+                                {managersChain.length > 0 ? (
+                                    managersChain.map((mgr, index) => (
+                                        <div key={mgr.id} className="flex flex-col items-center">
+                                            <div className="flex flex-col items-center p-2 border border-slate-200 bg-white dark:bg-slate-700/50 rounded-lg w-28 shadow-sm hover:shadow-md transition-shadow">
+                                                <div className="w-10 h-10 rounded-full border border-slate-100 dark:border-slate-600 bg-slate-50 flex items-center justify-center overflow-hidden mb-2">
+                                                    {mgr.avatarUrl ? <img src={mgr.avatarUrl} className="w-full h-full object-cover" /> : <UserCircleIcon className="w-8 h-8 text-slate-400" />}
+                                                </div>
+                                                <p className="text-[10px] font-bold text-slate-700 dark:text-slate-200 text-center leading-tight w-full break-words mb-0.5">{mgr.fullName}</p>
+                                                <p className="text-[9px] text-slate-400 text-center truncate w-full">{mgr.position}</p>
+                                            </div>
+                                            {/* Line connecting to next item (either next manager or current user) */}
+                                            <div className="h-6 w-px bg-slate-300"></div>
                                         </div>
-                                        <p className="text-xs font-bold mt-1 text-slate-700">{manager.fullName} ({t('manager_role')})</p>
-                                        <div className="h-6 w-px bg-slate-300 my-1"></div>
-                                    </div>
+                                    ))
                                 ) : (
                                     <div className="flex flex-col items-center mb-4 text-slate-400">
                                         <span className="text-xs italic">Top Level</span>
@@ -380,34 +392,60 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigate }) => {
                                     <p className="text-[10px] text-emerald-600">{currentUser.position}</p>
                                 </div>
 
-                                {/* Subordinates Line */}
+                                {/* Subordinates Tree */}
                                 {subordinates.length > 0 && (
                                     <>
                                         <div className="h-6 w-px bg-slate-300 mb-1"></div>
-                                        {subordinates.length > 1 && (
-                                            <>
-                                                <div className="w-2/3 border-t border-slate-300"></div>
-                                                <div className="flex justify-between w-2/3 pt-1">
-                                                    {/* Vertical lines connecting to horizontal bar - approximate for simple tree */}
-                                                    {subordinates.map((_, idx) => (
-                                                        <div key={idx} className={`h-3 w-px bg-slate-300 ${idx === 0 || idx === subordinates.length - 1 ? 'visible' : 'invisible'}`}></div>
-                                                    ))}
-                                                </div>
-                                            </>
-                                        )}
-                                        {/* Single subordinate vertical line extension if only 1 */}
-                                        {subordinates.length === 1 && <div className="h-3 w-px bg-slate-300"></div>}
+                                        <div className="w-full overflow-x-auto pb-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
+                                            <div className="flex justify-center min-w-max px-4">
+                                                {subordinates.map((sub: any) => (
+                                                    <div key={sub.id} className="flex flex-col items-center mx-2">
+                                                        {/* Node Card */}
+                                                        <div className="relative flex flex-col items-center">
+                                                            {/* Vertical Line from top */}
+                                                            <div className="h-4 w-px bg-slate-300 absolute -top-4 left-1/2 transform -translate-x-1/2"></div>
 
-                                        <div className="flex gap-4 mt-4 justify-center flex-wrap px-4">
-                                            {subordinates.map(sub => (
-                                                <div key={sub.id} className="flex flex-col items-center p-2 border border-slate-200 bg-white dark:bg-slate-700/50 rounded-lg w-28 shadow-sm hover:shadow-md transition-shadow">
-                                                    <div className="w-10 h-10 rounded-full border border-slate-100 dark:border-slate-600 bg-slate-50 flex items-center justify-center overflow-hidden mb-2">
-                                                        {sub.avatarUrl ? <img src={sub.avatarUrl} className="w-full h-full object-cover" /> : <span className="text-xs text-slate-500 font-bold">{sub.fullName.charAt(0)}</span>}
+                                                            <div className="flex flex-col items-center p-2 border border-slate-200 bg-white dark:bg-slate-700/50 rounded-lg w-28 shadow-sm hover:shadow-md transition-shadow z-10 relative">
+                                                                <div className="w-10 h-10 rounded-full border border-slate-100 dark:border-slate-600 bg-slate-50 flex items-center justify-center overflow-hidden mb-2">
+                                                                    {sub.avatarUrl ? <img src={sub.avatarUrl} className="w-full h-full object-cover" /> : <span className="text-xs text-slate-500 font-bold">{sub.fullName.charAt(0)}</span>}
+                                                                </div>
+                                                                <p className="text-[10px] font-bold text-slate-700 dark:text-slate-200 text-center leading-tight w-full break-words mb-0.5">{sub.fullName}</p>
+                                                                <p className="text-[9px] text-slate-400 text-center truncate w-full">{sub.position}</p>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Children */}
+                                                        {sub.children && sub.children.length > 0 && (
+                                                            <div className="flex flex-col items-center mt-4 relative">
+                                                                {/* Line down from parent */}
+                                                                <div className="h-4 w-px bg-slate-300 absolute -top-4 left-1/2 transform -translate-x-1/2"></div>
+
+                                                                {/* Horizontal Line covering children */}
+                                                                {sub.children.length > 1 && (
+                                                                    <div className="absolute top-0 h-px bg-slate-300 w-[calc(100%-4rem)]"></div>
+                                                                )}
+
+                                                                <div className="flex items-start gap-4 pt-4">
+                                                                    {sub.children.map((child: any) => (
+                                                                        <div key={child.id} className="flex flex-col items-center relative">
+                                                                            {/* Vertical line to child */}
+                                                                            {sub.children.length > 1 && <div className="absolute -top-4 h-4 w-px bg-slate-300"></div>}
+
+                                                                            <div className="flex flex-col items-center p-2 border border-slate-200 bg-white dark:bg-slate-700/50 rounded-lg w-28 shadow-sm hover:shadow-md transition-shadow">
+                                                                                <div className="w-10 h-10 rounded-full border border-slate-100 dark:border-slate-600 bg-slate-50 flex items-center justify-center overflow-hidden mb-2">
+                                                                                    {child.avatarUrl ? <img src={child.avatarUrl} className="w-full h-full object-cover" /> : <span className="text-xs text-slate-500 font-bold">{child.fullName.charAt(0)}</span>}
+                                                                                </div>
+                                                                                <p className="text-[10px] font-bold text-slate-700 dark:text-slate-200 text-center leading-tight w-full break-words mb-0.5">{child.fullName}</p>
+                                                                                <p className="text-[9px] text-slate-400 text-center truncate w-full">{child.position}</p>
+                                                                            </div>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+                                                        )}
                                                     </div>
-                                                    <p className="text-[10px] font-bold text-slate-700 dark:text-slate-200 text-center leading-tight w-full break-words mb-0.5">{sub.fullName}</p>
-                                                    <p className="text-[9px] text-slate-400 text-center truncate w-full">{sub.position}</p>
-                                                </div>
-                                            ))}
+                                                ))}
+                                            </div>
                                         </div>
                                     </>
                                 )}
@@ -441,7 +479,7 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigate }) => {
                                         type="text"
                                         value={phoneNumber}
                                         onChange={(e) => setPhoneNumber(e.target.value)}
-                                        className="pl-10 rtl:pr-10 w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
+                                        className="pl-10 rtl:pr-10 w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 text-black"
                                     />
                                 </div>
                             </div>
@@ -453,7 +491,7 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigate }) => {
                                         type="text"
                                         value={nationalAddress}
                                         onChange={(e) => setNationalAddress(e.target.value)}
-                                        className="pl-10 rtl:pr-10 w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
+                                        className="pl-10 rtl:pr-10 w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 text-black"
                                     />
                                 </div>
                             </div>
@@ -463,7 +501,7 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigate }) => {
                                     type="text"
                                     value={city}
                                     onChange={(e) => setCity(e.target.value)}
-                                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
+                                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 text-black"
                                 />
                             </div>
                             <div>
@@ -472,7 +510,7 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigate }) => {
                                     type="text"
                                     value={district}
                                     onChange={(e) => setDistrict(e.target.value)}
-                                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
+                                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 text-black"
                                 />
                             </div>
                         </div>
