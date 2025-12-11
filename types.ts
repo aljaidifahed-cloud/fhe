@@ -71,6 +71,21 @@ export interface Employee {
   contract: Contract;
   role: UserRole;
   permissions?: Record<string, boolean>;
+  employmentContractUrl?: string; // New Document
+  bankAccountUrl?: string;        // New Document
+  nationalIdUrl?: string;         // New Document
+  jobSummary?: string;            // New Job Info
+  assets?: Asset[];               // New Custody/Assets
+}
+
+export interface Asset {
+  id: string;
+  name: string;
+  serialNumber?: string;
+  type: string;
+  dateAssigned: string;
+  status: 'Active' | 'Returned' | 'Lost';
+  notes?: string;
 }
 
 export interface Group {

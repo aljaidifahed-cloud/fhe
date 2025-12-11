@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 import { Page } from '../types';
-import { updateMyProfile, getEmployeeById, getEmployees } from '../services/mockService';
+import { updateMyProfile, getEmployeeById, getEmployees, updateEmployee } from '../services/mockService';
 import { Employee } from '../types';
 import {
     UserCircleIcon,
@@ -15,8 +15,26 @@ import {
     CalendarIcon,
     BanknotesIcon,
     BuildingOfficeIcon,
-    ChartBarIcon
+    ChartBarIcon,
+    EyeIcon,
+    ArrowDownTrayIcon,
+    XMarkIcon,
+    ArchiveBoxIcon,
+    PlusIcon,
+    PencilSquareIcon, // New
+    TrashIcon // New
 } from '@heroicons/react/24/outline';
+import {
+    BarChart,
+    Bar,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip,
+    ResponsiveContainer,
+    Cell
+} from 'recharts';
+import { calculatePayroll } from '../utils/payrollUtils';
 
 interface ProfileProps {
     onNavigate: (page: Page) => void;
@@ -32,6 +50,81 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigate }) => {
     const [nationalAddress, setNationalAddress] = useState('');
     const [city, setCity] = useState('');
     const [district, setDistrict] = useState('');
+    const [showLeaveDetails, setShowLeaveDetails] = useState(false);
+
+    // Asset State
+    const [showAssetModal, setShowAssetModal] = useState(false);
+    const [editingAssetId, setEditingAssetId] = useState<string | null>(null);
+    const [newAsset, setNewAsset] = useState<{ name: string, type: string, serialNumber: string, dateAssigned: string, notes: string }>({
+        name: '', type: 'Electronics', serialNumber: '', dateAssigned: new Date().toISOString().split('T')[0], notes: ''
+    });
+
+    const handleAddAsset = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!currentUser) return;
+
+        let updatedAssets;
+
+        if (editingAssetId) {
+            // Update existing
+            updatedAssets = (currentUser.assets || []).map(a =>
+                a.id === editingAssetId
+                    ? { ...a, ...newAsset }
+                    : a
+            );
+        } else {
+            // Create new
+            const assetObj: any = {
+                id: `ast-${Date.now()}`,
+                ...newAsset,
+                status: 'Active'
+            };
+            updatedAssets = [...(currentUser.assets || []), assetObj];
+        }
+
+        try {
+            await updateEmployee(currentUser.id, { assets: updatedAssets });
+            await loadUser();
+
+            setShowAssetModal(false);
+            setEditingAssetId(null);
+            setNewAsset({ name: '', type: 'Electronics', serialNumber: '', dateAssigned: new Date().toISOString().split('T')[0], notes: '' });
+        } catch (error) {
+            console.error("Failed to save asset", error);
+            alert("Failed to save item");
+        }
+    };
+
+    const handleDeleteAsset = async (assetId: string) => {
+        if (!currentUser || !window.confirm(t('confirm_delete_asset'))) return;
+
+        const updatedAssets = (currentUser.assets || []).filter(a => a.id !== assetId);
+        try {
+            await updateEmployee(currentUser.id, { assets: updatedAssets });
+            await loadUser();
+        } catch (error) {
+            console.error("Failed to delete asset", error);
+            alert("Failed to delete item");
+        }
+    };
+
+    const openEditModal = (asset: any) => {
+        setNewAsset({
+            name: asset.name,
+            type: asset.type,
+            serialNumber: asset.serialNumber || '',
+            dateAssigned: asset.dateAssigned,
+            notes: asset.notes || ''
+        });
+        setEditingAssetId(asset.id);
+        setShowAssetModal(true);
+    };
+
+    const openAddModal = () => {
+        setNewAsset({ name: '', type: 'Electronics', serialNumber: '', dateAssigned: new Date().toISOString().split('T')[0], notes: '' });
+        setEditingAssetId(null);
+        setShowAssetModal(true);
+    }; // New State for Leave Details Modal
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
@@ -126,9 +219,9 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigate }) => {
 
     // Dynamic Data for Lists
     const leaveBalances = [
-        { type: 'leave_annual', days: 30, color: 'bg-emerald-500' },
-        { type: 'leave_sick', days: 15, color: 'bg-blue-500' },
-        { type: 'leave_unpaid', days: 0, color: 'bg-slate-400' }
+        { type: 'leave_annual', days: 30, total: 30, taken: 0, color: 'bg-emerald-500' },
+        { type: 'leave_sick', days: 15, total: 15, taken: 0, color: 'bg-blue-500' },
+        { type: 'leave_unpaid', days: 0, total: 0, taken: 0, color: 'bg-slate-400' }
     ];
 
     const basicSalary = currentUser.contract?.basicSalary || 0;
@@ -196,8 +289,8 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigate }) => {
                         </div>
 
                         <div className="flex gap-2">
-                            <button className="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-bold shadow-sm hover:bg-emerald-700">{t('request_leave')}</button>
-                            <button className="px-4 py-2 border border-slate-300 text-slate-700 dark:text-slate-300 rounded-lg text-sm font-bold hover:bg-slate-50 dark:hover:bg-slate-700">{t('settings')}</button>
+                            <button onClick={() => onNavigate(Page.REQUESTS)} className="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-bold shadow-sm hover:bg-emerald-700">{t('request_leave')}</button>
+                            <button onClick={() => onNavigate(Page.PERMISSIONS)} className="px-4 py-2 border border-slate-300 text-slate-700 dark:text-slate-300 rounded-lg text-sm font-bold hover:bg-slate-50 dark:hover:bg-slate-700">{t('settings')}</button>
                         </div>
                     </div>
 
@@ -220,6 +313,200 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigate }) => {
             </div>
 
             {/* Dashboard Content */}
+            {/* Job Info Content */}
+            {activeTab === 'jobinfo' && (
+                <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
+                    <h3 className="font-bold text-slate-800 dark:text-white mb-6 flex items-center">
+                        <BriefcaseIcon className="w-5 h-5 mr-2 text-slate-400" />
+                        {t('job_info') || 'Job Information'}
+                    </h3>
+                    <div className="space-y-6 max-w-3xl">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <p className="text-xs text-slate-400 uppercase tracking-wider mb-1">{t('lbl_department') || 'Department'}</p>
+                                <p className="font-medium text-slate-700 dark:text-slate-200 text-lg">{currentUser.department}</p>
+                            </div>
+                            <div>
+                                <p className="text-xs text-slate-400 uppercase tracking-wider mb-1">{t('lbl_job_title') || 'Job Title'}</p>
+                                <p className="font-medium text-slate-700 dark:text-slate-200 text-lg">{currentUser.position}</p>
+                            </div>
+                        </div>
+
+                        <div className="border-t border-slate-100 dark:border-slate-700 pt-6">
+                            <p className="text-xs text-slate-400 uppercase tracking-wider mb-2">{t('lbl_job_summary') || 'Job Summary'}</p>
+                            <div className="bg-slate-50 dark:bg-slate-700/30 p-4 rounded-lg border border-slate-200 dark:border-slate-700">
+                                {currentUser.jobSummary ? (
+                                    <p className="text-slate-600 dark:text-slate-300 leading-relaxed text-sm">
+                                        {currentUser.jobSummary}
+                                    </p>
+                                ) : (
+                                    <p className="text-slate-400 italic text-sm">No job summary available.</p>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Documents Content */}
+            {activeTab === 'documents' && (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {[
+                        { title: 'Employment Contract', key: 'employmentContract', url: currentUser.employmentContractUrl },
+                        { title: 'Bank Account', key: 'bankAccount', url: currentUser.bankAccountUrl },
+                        { title: 'National ID / Residence Permit', key: 'nationalId', url: currentUser.nationalIdUrl }
+                    ].map((doc, idx) => (
+                        <div key={idx} className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 flex flex-col items-center relative group">
+                            {/* Card Content ... same as before */}
+                            <div className="w-full h-32 bg-slate-100 dark:bg-slate-900 rounded-lg mb-4 flex items-center justify-center overflow-hidden">
+                                {doc.url ? (
+                                    <div className="text-center">
+                                        <BriefcaseIcon className="w-8 h-8 text-emerald-500 mx-auto mb-2" />
+                                        <span className="text-xs text-emerald-600 font-medium">Document Uploaded</span>
+                                    </div>
+                                ) : (
+                                    <ArrowDownTrayIcon className="w-8 h-8 text-slate-300" />
+                                )}
+                            </div>
+                            <h4 className="font-semibold text-slate-800 dark:text-white mb-4 text-center">{doc.title}</h4>
+
+                            {/* Actions Overlay */}
+                            <div className="absolute inset-0 bg-slate-900/50 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 backdrop-blur-[1px]">
+                                {doc.url && (
+                                    <>
+                                        <button
+                                            onClick={() => window.open(doc.url, '_blank')}
+                                            className="p-2 bg-white text-emerald-600 rounded-full hover:bg-emerald-50 transition-colors"
+                                            title="View"
+                                        >
+                                            <EyeIcon className="w-5 h-5" />
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                const link = document.createElement('a');
+                                                link.href = doc.url!;
+                                                link.download = `${doc.title.replace(/\s+/g, '_')}.png`;
+                                                link.click();
+                                            }}
+                                            className="p-2 bg-white text-emerald-600 rounded-full hover:bg-emerald-50 transition-colors"
+                                            title="Save"
+                                        >
+                                            <ArrowDownTrayIcon className="w-5 h-5" />
+                                        </button>
+                                    </>
+                                )}
+                            </div>
+
+                            <label className="text-sm text-emerald-600 hover:text-emerald-700 font-medium cursor-pointer border border-emerald-200 px-3 py-1 rounded inline-flex items-center mt-auto z-10 bg-white/80 dark:bg-slate-800">
+                                <ArrowPathIcon className="w-3 h-3 mr-1" />
+                                {doc.url ? 'Change File' : 'Upload File'}
+                                <input
+                                    type="file"
+                                    className="hidden"
+                                    accept="image/*,application/pdf"
+                                    onChange={async (e) => {
+                                        const file = e.target.files?.[0];
+                                        if (!file) return;
+
+                                        setLoading(true);
+                                        try {
+                                            const formData = new FormData();
+                                            formData.append(doc.key, file);
+                                            await updateMyProfile(currentUser.id, formData);
+                                            await loadUser();
+                                            // Optional: Success feedback could be improved
+                                            alert(`${doc.title} updated successfully`);
+                                        } catch (err) {
+                                            console.error("Upload failed", err);
+                                            alert("Failed to upload document");
+                                        } finally {
+                                            setLoading(false);
+                                        }
+                                    }}
+                                />
+                            </label>
+                        </div>
+                    ))}
+                </div>
+            )}
+            {/* Assets Content */}
+            {activeTab === 'assets' && (
+                <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
+                    <div className="flex justify-between items-center mb-6">
+                        <h3 className="font-bold text-slate-800 dark:text-white flex items-center">
+                            <ArchiveBoxIcon className="w-5 h-5 mr-2 text-slate-400" />
+                            {t('assets') || 'Custody & Assets'}
+                        </h3>
+                        {/* Only show Add button if authorized - assuming everyone for this demo or check role */}
+                        <button
+                            onClick={openAddModal}
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center transition-colors shadow-sm"
+                        >
+                            <PlusIcon className="w-4 h-4 mr-2 rtl:ml-2" />
+                            {t('add_item') || 'Add Item'}
+                        </button>
+                    </div>
+
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse">
+                            <thead>
+                                <tr className="border-b border-slate-200 dark:border-slate-700">
+                                    <th className="py-3 px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('item_name') || 'Item Name'}</th>
+                                    <th className="py-3 px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('type') || 'Type'}</th>
+                                    <th className="py-3 px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('serial_number') || 'Serial Number'}</th>
+                                    <th className="py-3 px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('date_assigned') || 'Date Assigned'}</th>
+                                    <th className="py-3 px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('status') || 'Status'}</th>
+                                    <th className="py-3 px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right">{t('actions') || 'Actions'}</th>
+                                </tr>
+                            </thead>
+                            <tbody className="text-sm">
+                                {currentUser.assets && currentUser.assets.length > 0 ? (
+                                    currentUser.assets.map((asset: any) => (
+                                        <tr key={asset.id} className="border-b border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                                            <td className="py-3 px-4 font-medium text-slate-800 dark:text-slate-200">{asset.name}</td>
+                                            <td className="py-3 px-4 text-slate-600 dark:text-slate-400">{t(`asset_${asset.type.toLowerCase()}` as any)}</td>
+                                            <td className="py-3 px-4 font-mono text-slate-500 text-xs">{asset.serialNumber || '-'}</td>
+                                            <td className="py-3 px-4 text-slate-600 dark:text-slate-400">{asset.dateAssigned}</td>
+                                            <td className="py-3 px-4">
+                                                <span className={`px-2 py-1 rounded-full text-xs font-bold ${asset.status === 'Active' ? 'bg-emerald-100 text-emerald-700' :
+                                                        asset.status === 'Returned' ? 'bg-slate-100 text-slate-700' :
+                                                            'bg-red-100 text-red-700'
+                                                    }`}>
+                                                    {t(asset.status.toLowerCase() as any) || asset.status}
+                                                </span>
+                                            </td>
+                                            <td className="py-3 px-4 text-right flex justify-end gap-2">
+                                                <button
+                                                    onClick={() => openEditModal(asset)}
+                                                    className="p-1 text-slate-400 hover:text-emerald-600 transition-colors"
+                                                    title={t('edit_item')}
+                                                >
+                                                    <PencilSquareIcon className="w-5 h-5" />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDeleteAsset(asset.id)}
+                                                    className="p-1 text-slate-400 hover:text-red-500 transition-colors"
+                                                    title={t('delete') || 'Delete'}
+                                                >
+                                                    <TrashIcon className="w-5 h-5" />
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))
+                                ) : (
+                                    <tr>
+                                        <td colSpan={6} className="py-8 text-center text-slate-400 italic">
+                                            {t('no_assets') || 'No custody items assigned.'}
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            )}
+
+            {/* Overview Content */}
             {activeTab === 'overview' && (
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* LEFT COLUMN */}
@@ -230,17 +517,52 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigate }) => {
                                 <ChartBarIcon className="w-5 h-5 mr-2 text-slate-400" />
                                 {t('deductions_benefits')}
                             </h3>
-                            <div className="flex items-end space-x-4 rtl:space-x-reverse h-32 px-4 pb-2 border-b border-slate-100 dark:border-slate-700">
-                                <div className="w-1/4 bg-amber-400 rounded-t-md h-[60%]" title={t('benefits')}></div>
-                                <div className="w-1/4 bg-blue-500 rounded-t-md h-[80%]" title={t('deductions')}></div>
-                                <div className="w-1/4 bg-emerald-500 rounded-t-md h-[40%]" title={t('allowances')}></div>
-                                <div className="w-1/4 bg-slate-300 rounded-t-md h-[20%]" title={t('other')}></div>
-                            </div>
-                            <div className="flex justify-between text-xs text-slate-500 mt-2">
-                                <span>{t('benefits')}</span>
-                                <span>{t('deductions')}</span>
-                                <span>{t('allowances')}</span>
-                                <span>{t('other')}</span>
+                            <div className="h-64 w-full">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart
+                                        data={(() => {
+                                            const payroll = calculatePayroll(currentUser);
+                                            return [
+                                                { name: t('benefits'), value: payroll.basicSalary, color: '#fbbf24' },
+                                                { name: t('deductions'), value: payroll.gosiDeductionEmployee, color: '#3b82f6' },
+                                                { name: t('allowances'), value: currentUser.contract.housingAllowance + currentUser.contract.transportAllowance, color: '#10b981' },
+                                                { name: t('other'), value: currentUser.contract.otherAllowance, color: '#cbd5e1' }
+                                            ];
+                                        })()}
+                                        margin={{ top: 20, right: 30, left: 0, bottom: 5 }}
+                                    >
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                                        <XAxis
+                                            dataKey="name"
+                                            axisLine={false}
+                                            tickLine={false}
+                                            tick={{ fill: '#64748b', fontSize: 12 }}
+                                            dy={10}
+                                        />
+                                        <YAxis
+                                            axisLine={false}
+                                            tickLine={false}
+                                            tick={{ fill: '#64748b', fontSize: 12 }}
+                                            tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`}
+                                        />
+                                        <Tooltip
+                                            cursor={{ fill: 'transparent' }}
+                                            contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', padding: '12px' }}
+                                            formatter={(value: number) => [`${value.toLocaleString()} SAR`, '']}
+                                            labelStyle={{ color: '#64748b', marginBottom: '4px' }}
+                                        />
+                                        <Bar dataKey="value" radius={[6, 6, 0, 0]} animationDuration={1500}>
+                                            {[
+                                                { name: t('benefits'), value: basicSalary, color: '#fbbf24' },
+                                                { name: t('deductions'), value: Math.round(basicSalary * 0.0975), color: '#3b82f6' },
+                                                { name: t('allowances'), value: housing + transport, color: '#10b981' },
+                                                { name: t('other'), value: other, color: '#cbd5e1' }
+                                            ].map((entry, index) => (
+                                                <Cell key={`cell-${index}`} fill={entry.color} />
+                                            ))}
+                                        </Bar>
+                                    </BarChart>
+                                </ResponsiveContainer>
                             </div>
                         </div>
 
@@ -251,7 +573,7 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigate }) => {
                                     <CalendarIcon className="w-5 h-5 mr-2 text-slate-400" />
                                     {t('leaves_balance')}
                                 </h3>
-                                <span className="text-xs text-emerald-600 font-medium cursor-pointer">{t('view_history')}</span>
+                                <span onClick={() => setShowLeaveDetails(true)} className="text-xs text-emerald-600 font-medium cursor-pointer hover:underline">{t('view_history')}</span>
                             </div>
                             <div className="space-y-4">
                                 {leaveBalances.map((leave, idx) => (
@@ -525,6 +847,136 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigate }) => {
                             </button>
                         </div>
                     </form>
+                </div>
+            )}
+
+            {/* Leave Details Modal */}
+            {showLeaveDetails && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm" onClick={() => setShowLeaveDetails(false)}>
+                    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl w-full max-w-lg overflow-hidden border border-slate-200 dark:border-slate-700" onClick={e => e.stopPropagation()}>
+                        <div className="p-6 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center">
+                            <h3 className="text-xl font-bold text-slate-800 dark:text-white flex items-center">
+                                <CalendarIcon className="w-6 h-6 mr-2 text-emerald-500" />
+                                {t('leave_details') || 'Leave Balance Details'}
+                            </h3>
+                            <button onClick={() => setShowLeaveDetails(false)} className="text-slate-400 hover:text-red-500 transition-colors">
+                                <XMarkIcon className="w-6 h-6" />
+                            </button>
+                        </div>
+                        <div className="p-6 space-y-4">
+                            {leaveBalances.map((leave, idx) => (
+                                <div key={idx} className="bg-slate-50 dark:bg-slate-700/50 p-4 rounded-xl flex justify-between items-center">
+                                    <div>
+                                        <p className="font-semibold text-slate-800 dark:text-white text-lg">{t(leave.type.toLowerCase().replace(' ', '_') as any) || leave.type}</p>
+                                        <p className="text-sm text-slate-500 dark:text-slate-400">{leave.total} {t('days_available')}</p>
+                                    </div>
+                                    <div className="text-right">
+                                        <span className={`text-2xl font-bold ${leave.color === 'emerald' ? 'text-emerald-500' : leave.color === 'blue' ? 'text-blue-500' : 'text-slate-500'}`}>
+                                            {leave.total - leave.taken}
+                                        </span>
+                                    </div>
+                                </div>
+                            ))}
+
+                            {/* Expected Vacation Days Metric */}
+                            <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800/30 p-4 rounded-xl flex justify-between items-center">
+                                <div>
+                                    <p className="font-semibold text-emerald-800 dark:text-emerald-200 text-lg">{t('lbl_expected_vacation_days') || 'Expected Vacation Days'}</p>
+                                    <p className="text-sm text-emerald-600/80 dark:text-emerald-400/80">End of Year Projection</p>
+                                </div>
+                                <div className="text-right">
+                                    <span className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">42</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="p-4 bg-slate-50 dark:bg-slate-900/50 text-center">
+                            <button onClick={() => setShowLeaveDetails(false)} className="px-6 py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors">
+                                {t('close_modal') || 'Close'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Asset Modal */}
+            {showAssetModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm" onClick={() => setShowAssetModal(false)}>
+                    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl w-full max-w-md overflow-hidden border border-slate-200 dark:border-slate-700" onClick={e => e.stopPropagation()}>
+                        <div className="p-6 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center bg-slate-50 dark:bg-slate-900/50">
+                            <h3 className="font-bold text-lg text-slate-800 dark:text-white">
+                                {editingAssetId ? (t('edit_item') || 'Edit Item') : (t('add_asset') || 'Add Custody Item')}
+                            </h3>
+                            <button onClick={() => setShowAssetModal(false)} className="text-slate-400 hover:text-slate-600 transition-colors">
+                                <XMarkIcon className="w-6 h-6" />
+                            </button>
+                        </div>
+                        <div className="p-6">
+                            <form onSubmit={handleAddAsset} className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('item_name') || 'Item Name'}</label>
+                                    <input
+                                        type="text"
+                                        required
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white"
+                                        value={newAsset.name}
+                                        onChange={e => setNewAsset({ ...newAsset, name: e.target.value })}
+                                    />
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('type') || 'Type'}</label>
+                                        <select
+                                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white"
+                                            value={newAsset.type}
+                                            onChange={e => setNewAsset({ ...newAsset, type: e.target.value })}
+                                        >
+                                            <option value="Electronics">{t('asset_electronics')}</option>
+                                            <option value="Furniture">{t('asset_furniture')}</option>
+                                            <option value="Vehicle">{t('asset_vehicle')}</option>
+                                            <option value="Accessory">{t('asset_accessory')}</option>
+                                            <option value="Other">{t('asset_other')}</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('date_assigned') || 'Date Assigned'}</label>
+                                        <input
+                                            type="date"
+                                            required
+                                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white"
+                                            value={newAsset.dateAssigned}
+                                            onChange={e => setNewAsset({ ...newAsset, dateAssigned: e.target.value })}
+                                        />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('serial_number') || 'Serial Number'}</label>
+                                    <input
+                                        type="text"
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white"
+                                        value={newAsset.serialNumber}
+                                        onChange={e => setNewAsset({ ...newAsset, serialNumber: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('notes') || 'Notes'}</label>
+                                    <textarea
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white"
+                                        rows={3}
+                                        value={newAsset.notes}
+                                        onChange={e => setNewAsset({ ...newAsset, notes: e.target.value })}
+                                    ></textarea>
+                                </div>
+                                <div className="pt-2">
+                                    <button
+                                        type="submit"
+                                        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded-lg shadow-md transition-colors"
+                                    >
+                                        {editingAssetId ? (t('update_item') || 'Update Item') : (t('save_item') || 'Save Item')}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>

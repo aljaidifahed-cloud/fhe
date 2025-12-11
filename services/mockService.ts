@@ -27,7 +27,30 @@ const SEED_DATA: Employee[] = [
     bankName: "Saudi National Bank",
     avatarUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?fit=facearea&facepad=2&w=256&h=256&q=80",
     contract: { basicSalary: 35000, housingAllowance: 8750, transportAllowance: 2000, otherAllowance: 0 },
-    role: UserRole.MANAGER
+    role: UserRole.MANAGER,
+    jobSummary: "As the Chief Executive Officer (CEO), I am responsible for the overall success of the organization. My role involves setting strategic direction, building and leading the senior executive team, contrasting resource allocation, and ensuring that the company's culture and values are up held.",
+    // Sample Documents
+    employmentContractUrl: "https://images.unsplash.com/photo-1586281380349-632531db7ed4?w=800&q=80",
+    bankAccountUrl: "https://images.unsplash.com/photo-1601597111158-2fceff292cdc?w=800&q=80",
+    nationalIdUrl: "https://images.unsplash.com/photo-1549923746-c502d488b3ea?w=800&q=80",
+    assets: [
+      {
+        id: "ast-001",
+        name: "MacBook Pro 16\"",
+        serialNumber: "FVFY782LHV29",
+        type: "Electronics",
+        dateAssigned: "2020-01-15",
+        status: "Active",
+        notes: "Primary work laptop"
+      },
+      {
+        id: "ast-002",
+        name: "Magic Mouse 2",
+        type: "Accessory",
+        dateAssigned: "2020-01-15",
+        status: "Active"
+      }
+    ]
   },
   // 2. HR Manager (Saudi) - Incomplete
   {
@@ -468,18 +491,41 @@ export const updateEmployee = async (id: string, updatedData: Partial<Employee>)
   throw new Error("Employee not found");
 };
 
+const fileToBase64 = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = error => reject(error);
+  });
+};
+
 export const updateMyProfile = async (id: string, formData: FormData): Promise<Employee> => {
   await delay(800);
   const updates: any = {};
   if (formData.get('phoneNumber')) updates.phoneNumber = formData.get('phoneNumber');
   if (formData.get('nationalAddress')) updates.nationalAddress = formData.get('nationalAddress');
   if (formData.get('city')) updates.city = formData.get('city');
+  if (formData.get('city')) updates.city = formData.get('city');
   if (formData.get('district')) updates.district = formData.get('district');
 
-  const avatarFile = formData.get('avatar');
-  if (avatarFile && typeof avatarFile !== 'string') {
-    updates.avatarUrl = "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80";
+  // Helper to handle file uploads
+  const handleDocUpload = async (fieldName: string, updateKey: string) => {
+    const file = formData.get(fieldName);
+    if (file && file instanceof File) {
+      try {
+        const base64 = await fileToBase64(file);
+        updates[updateKey] = base64;
+      } catch (error) {
+        console.error(`Error processing ${fieldName}`, error);
+      }
+    }
   }
+
+  await handleDocUpload('avatar', 'avatarUrl');
+  await handleDocUpload('employmentContract', 'employmentContractUrl');
+  await handleDocUpload('bankAccount', 'bankAccountUrl');
+  await handleDocUpload('nationalId', 'nationalIdUrl');
 
   return updateEmployee(id, updates);
 };
