@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useNotifications } from '../contexts/NotificationsContext';
 import { useAuth } from '../contexts/AuthContext';
-import { ServiceRequest, RequestType, RequestStatus } from '../types';
+import { ServiceRequest, RequestType, RequestStatus, UserRole } from '../types';
 import { getRequests, createRequest, updateRequestStatus } from '../services/mockService';
 import {
     PlusIcon,
@@ -143,6 +143,7 @@ export const Requests: React.FC = () => {
                         <RequestCard
                             key={req.id}
                             request={req}
+                            currentUser={currentUser}
                             onApprove={() => handleStatusUpdate(req.id, RequestStatus.APPROVED)}
                             onReject={() => handleStatusUpdate(req.id, RequestStatus.REJECTED)}
                             t={t}
@@ -389,10 +390,11 @@ export const Requests: React.FC = () => {
 // --- Request Card Component ---
 const RequestCard: React.FC<{
     request: ServiceRequest,
+    currentUser: any,
     onApprove: () => void,
     onReject: () => void,
     t: any
-}> = ({ request, onApprove, onReject, t }) => {
+}> = ({ request, currentUser, onApprove, onReject, t }) => {
 
     const getIcon = (type: RequestType) => {
         switch (type) {
@@ -523,7 +525,32 @@ const RequestCard: React.FC<{
         }
     };
 
-    const isPending = request.status === RequestStatus.PENDING_MANAGER || request.status === RequestStatus.PENDING_HR;
+    const canApprove = () => {
+        if (!currentUser) return false;
+
+        // 1. SELF-APPROVAL PREVENTION
+        if (request.userId === currentUser.id) return false;
+
+        // 2. ROLE-BASED WORKFLOW
+        switch (request.status) {
+            case RequestStatus.PENDING_MANAGER:
+                // Only Dept Managers (or CEO acting as manager)
+                return currentUser.role === UserRole.DEPT_MANAGER || currentUser.role === UserRole.MANAGER;
+
+            case RequestStatus.PENDING_GM:
+                // Only General Manager (CEO)
+                return currentUser.role === UserRole.MANAGER;
+
+            case RequestStatus.PENDING_HR:
+                // Only HR (Admin)
+                return currentUser.role === UserRole.ADMIN;
+
+            default:
+                return false;
+        }
+    };
+
+    const isPending = canApprove();
 
     return (
         <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-5 flex flex-col hover:shadow-md transition-shadow">
