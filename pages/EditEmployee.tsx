@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useNotifications } from '../contexts/NotificationsContext';
 import { Page } from '../types';
 import { NationalityType, Employee } from '../types';
 import { getEmployeeById, updateEmployee, getCountries, Country } from '../services/mockService';
@@ -12,6 +13,7 @@ interface EditEmployeeProps {
 
 export const EditEmployee: React.FC<EditEmployeeProps> = ({ id, onNavigate }) => {
   const { t, language } = useLanguage();
+  const { addNotification } = useNotifications();
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -128,7 +130,11 @@ export const EditEmployee: React.FC<EditEmployeeProps> = ({ id, onNavigate }) =>
 
       // Call Service (Simulating PUT request)
       await updateEmployee(id, updatedEmployee);
-
+      addNotification({
+        title: t('notifications'),
+        message: `${t('new_employee')} - ${updatedEmployee.fullName || formData.fullName}`,
+        type: 'success'
+      });
       onNavigate(Page.EMPLOYEES);
     } catch (err) {
       console.error("Update failed:", err);
@@ -296,17 +302,17 @@ export const EditEmployee: React.FC<EditEmployeeProps> = ({ id, onNavigate }) =>
 
             <div>
               <label className="block text-sm font-medium text-black dark:text-white mb-1">{t('lbl_housing')}</label>
-              <input required name="housingAllowance" value={formData.housingAllowance} onChange={handleChange} type="number" min="0" className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none" />
+              <input required name="housingAllowance" value={formData.housingAllowance} onChange={handleChange} type="number" min="0" className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-black dark:bg-slate-700 dark:text-white dark:border-slate-600" />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-black dark:text-white mb-1">{t('lbl_transport')}</label>
-              <input required name="transportAllowance" value={formData.transportAllowance} onChange={handleChange} type="number" min="0" className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none" />
+              <input required name="transportAllowance" value={formData.transportAllowance} onChange={handleChange} type="number" min="0" className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-black dark:bg-slate-700 dark:text-white dark:border-slate-600" />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-black dark:text-white mb-1">{t('lbl_other_allowance')}</label>
-              <input name="otherAllowance" value={formData.otherAllowance} onChange={handleChange} type="number" min="0" className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none" />
+              <input name="otherAllowance" value={formData.otherAllowance} onChange={handleChange} type="number" min="0" className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-black dark:bg-slate-700 dark:text-white dark:border-slate-600" />
             </div>
 
             <div>
@@ -316,7 +322,7 @@ export const EditEmployee: React.FC<EditEmployeeProps> = ({ id, onNavigate }) =>
 
             <div>
               <label className="block text-sm font-medium text-black dark:text-white mb-1">{t('lbl_bank')}</label>
-              <input required name="bankName" value={formData.bankName} onChange={handleChange} type="text" className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none" />
+              <input required name="bankName" value={formData.bankName} onChange={handleChange} type="text" className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-black dark:bg-slate-700 dark:text-white dark:border-slate-600" />
             </div>
           </div>
         </div>

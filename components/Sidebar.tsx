@@ -57,6 +57,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentPage, onNavigate, onLog
     { id: Page.PERMISSIONS, label: t('permissions'), icon: ShieldCheckIcon },
     { id: Page.WARNINGS_COMMITMENTS, label: t('warnings_commitments'), icon: ExclamationTriangleIcon },
     { id: Page.MY_WARNINGS, label: t('my_warnings'), icon: ShieldCheckIcon },
+    { id: Page.HIRED_LABOR, label: t('hired_labor'), icon: UsersIcon },
     { id: Page.ARCHITECTURE, label: t('architecture'), icon: ServerStackIcon },
   ];
 

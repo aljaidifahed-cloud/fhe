@@ -1,9 +1,10 @@
 import { Employee, NationalityType, ContractType, ServiceRequest, RequestType, RequestStatus, OrgTreeNode, UserRole } from '../types';
 
-const DB_KEY = 'hr_system_db_v7';
-const REQUESTS_KEY = 'hr_system_requests_v4';
-const WARNINGS_KEY = 'hr_system_warnings_v1';
-const DEDUCTIONS_KEY = 'hr_system_deductions_v1';
+const DB_KEY = 'hr_system_db_v11_fix';
+const REQUESTS_KEY = 'hr_system_requests_v8';
+const WARNINGS_KEY = 'hr_system_warnings_v5';
+const DEDUCTIONS_KEY = 'hr_system_deductions_v5';
+const COMMITMENTS_KEY = 'hr_system_commitments_v5';
 
 // SEED DATA: Employees
 const SEED_DATA: Employee[] = [
@@ -26,7 +27,7 @@ const SEED_DATA: Employee[] = [
     iban: "SA0000000000000000000001",
     bankName: "Saudi National Bank",
     avatarUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?fit=facearea&facepad=2&w=256&h=256&q=80",
-    contract: { basicSalary: 35000, housingAllowance: 8750, transportAllowance: 2000, otherAllowance: 0 },
+    contract: { basicSalary: 5000, housingAllowance: 0, transportAllowance: 0, otherAllowance: 0 },
     role: UserRole.MANAGER,
     jobSummary: "As the Chief Executive Officer (CEO), I am responsible for the overall success of the organization. My role involves setting strategic direction, building and leading the senior executive team, contrasting resource allocation, and ensuring that the company's culture and values are up held.",
     // Sample Documents
@@ -51,260 +52,7 @@ const SEED_DATA: Employee[] = [
         status: "Active"
       }
     ]
-  },
-  // 2. HR Manager (Saudi) - Incomplete
-  {
-    id: "10002",
-    companyId: "COMP-001",
-    managerId: "10001",
-    fullName: "Mohammed Al-Otaibi",
-    nationality: "Saudi Arabia",
-    iqamaOrNationalId: "1000000002",
-    idExpiryDate: "2028-05-15",
-    position: "HR Manager",
-    department: "Human Resources",
-    joinDate: "2021-03-10",
-    email: "mohammed@company.com",
-    phoneNumber: "+966 50 000 0002",
-    city: "Jeddah",
-    district: "Al Rawdah",
-    iban: "", // Incomplete
-    bankName: "",
-    contract: { basicSalary: 18000, housingAllowance: 4500, transportAllowance: 1500, otherAllowance: 0 },
-    role: UserRole.ADMIN
-  },
-  // 3. Senior Dev (Non-Saudi) - Expired ID
-  {
-    id: "10003",
-    companyId: "COMP-001",
-    managerId: "10001",
-    fullName: "Ahmed Rateb Ahmed Al-Tarani",
-    nationality: "Jordan",
-    iqamaOrNationalId: "2000000001",
-    idExpiryDate: "2023-01-01", // EXPIRED
-    position: "Senior Developer",
-    department: "IT",
-    joinDate: "2019-11-01",
-    email: "ahmed.rateb@company.com",
-    phoneNumber: "+966 50 000 0003",
-    city: "Riyadh",
-    district: "Al Malqa",
-    iban: "", // Incomplete
-    bankName: "Al Rajhi Bank",
-    contract: { basicSalary: 15000, housingAllowance: 3750, transportAllowance: 1000, otherAllowance: 500 },
-    role: UserRole.DEPT_MANAGER
-  },
-  // 4. Accountant (Saudi) - Incomplete
-  {
-    id: "10004",
-    companyId: "COMP-001",
-    managerId: "10001",
-    fullName: "Sarah Al-Ghamdi",
-    nationality: "Saudi Arabia",
-    iqamaOrNationalId: "1000000003",
-    idExpiryDate: "2029-12-31",
-    position: "Accountant",
-    department: "Finance",
-    joinDate: "2022-07-01",
-    email: "sarah@company.com",
-    phoneNumber: "+966 50 000 0004",
-    city: "Dammam",
-    district: "Al Faisaliyah",
-    iban: "", // Incomplete
-    bankName: "",
-    contract: { basicSalary: 9000, housingAllowance: 2250, transportAllowance: 800, otherAllowance: 200 },
-    role: UserRole.DEPT_MANAGER
-  },
-  // 5. Marketing Spec (Non-Saudi) - Incomplete
-  {
-    id: "10005",
-    companyId: "COMP-001",
-    managerId: "10001",
-    fullName: "Karim Mahmoud",
-    nationality: "Egypt",
-    iqamaOrNationalId: "2000000002",
-    idExpiryDate: "2026-08-20",
-    position: "Marketing Specialist",
-    department: "Marketing",
-    joinDate: "2023-01-15",
-    email: "karim@company.com",
-    phoneNumber: "+966 50 000 0005",
-    city: "Riyadh",
-    district: "Olaya",
-    iban: "",
-    bankName: "",
-    contract: { basicSalary: 8000, housingAllowance: 2000, transportAllowance: 600, otherAllowance: 0 },
-    role: UserRole.DEPT_MANAGER
-  },
-  // 6. Admin Assistant (Saudi) - Incomplete
-  {
-    id: "10006",
-    companyId: "COMP-001",
-    managerId: "10002",
-    fullName: "Noura Al-Saud",
-    nationality: "Saudi Arabia",
-    iqamaOrNationalId: "1000000004",
-    idExpiryDate: "2027-02-28",
-    position: "Admin Assistant",
-    department: "Administration",
-    joinDate: "2023-05-01",
-    email: "noura@company.com",
-    phoneNumber: "+966 50 000 0006",
-    city: "Riyadh",
-    district: "Hittin",
-    iban: "",
-    bankName: "",
-    contract: { basicSalary: 6000, housingAllowance: 1500, transportAllowance: 500, otherAllowance: 0 },
-    role: UserRole.EMPLOYEE
-  },
-  // 7. IT Support (Non-Saudi) - Expired ID
-  {
-    id: "10007",
-    companyId: "COMP-001",
-    managerId: "10003",
-    fullName: "Hail bin Turki Al-Farahidi",
-    nationality: "Yemen",
-    iqamaOrNationalId: "2000000003",
-    idExpiryDate: "2020-01-01", // EXPIRED LONG AGO
-    position: "IT Support",
-    department: "IT",
-    joinDate: "2018-06-01",
-    email: "hail@company.com",
-    phoneNumber: "+966 50 000 0007",
-    city: "Jeddah",
-    district: "Al Safa",
-    iban: "",
-    bankName: "",
-    contract: { basicSalary: 7000, housingAllowance: 1750, transportAllowance: 500, otherAllowance: 0 },
-    role: UserRole.EMPLOYEE
-  },
-  // 8. Sales Rep (Saudi) - Incomplete
-  {
-    id: "10008",
-    companyId: "COMP-001",
-    managerId: "10001",
-    fullName: "Khalid Al-Dossari",
-    nationality: "Saudi Arabia",
-    iqamaOrNationalId: "1000000005",
-    idExpiryDate: "2030-11-11",
-    position: "Sales Representative",
-    department: "Sales",
-    joinDate: "2022-09-01",
-    email: "khalid@company.com",
-    phoneNumber: "+966 50 000 0008",
-    city: "Khobar",
-    district: "Al Rakah",
-    iban: "",
-    bankName: "",
-    avatarUrl: "", // No avatar
-    contract: { basicSalary: 7500, housingAllowance: 1875, transportAllowance: 800, otherAllowance: 1500 }, // Commission?
-    role: UserRole.DEPT_MANAGER
-  },
-  // 9. Designer (Non-Saudi) - Incomplete
-  {
-    id: "10009",
-    companyId: "COMP-001",
-    managerId: "10005",
-    fullName: "Layla Hassan",
-    nationality: "Lebanon",
-    iqamaOrNationalId: "2000000004",
-    idExpiryDate: "2025-12-31", // Approaching
-    position: "Graphic Designer",
-    department: "Marketing",
-    joinDate: "2023-02-01",
-    email: "layla@company.com",
-    phoneNumber: "+966 50 000 0009",
-    city: "Riyadh",
-    district: "Al Narjis",
-    iban: "",
-    bankName: "",
-    contract: { basicSalary: 11000, housingAllowance: 2750, transportAllowance: 800, otherAllowance: 0 },
-    role: UserRole.EMPLOYEE
-  },
-  // 10. Developer (Indian)
-  {
-    id: "10010",
-    companyId: "COMP-001",
-    managerId: "10003",
-    fullName: "Rajesh Kumar",
-    nationality: "India",
-    iqamaOrNationalId: "2000000005",
-    idExpiryDate: "2026-03-15",
-    position: "Backend Developer",
-    department: "IT",
-    joinDate: "2023-06-01",
-    email: "rajesh@company.com",
-    phoneNumber: "+966 50 000 0010",
-    city: "Riyadh",
-    district: "Olaya",
-    iban: "SA0000000000000000000002",
-    bankName: "Alinma Bank",
-    contract: { basicSalary: 9500, housingAllowance: 2375, transportAllowance: 800, otherAllowance: 0 },
-    role: UserRole.EMPLOYEE
-  },
-  // 11. Worker (Bangladeshi)
-  {
-    id: "10011",
-    companyId: "COMP-001",
-    managerId: "10002",
-    fullName: "Abdul Rahman Khan",
-    nationality: "Bangladesh",
-    iqamaOrNationalId: "2000000006",
-    idExpiryDate: "2025-11-20",
-    position: "Facility Worker",
-    department: "Administration",
-    joinDate: "2022-01-15",
-    email: "abdul@company.com",
-    phoneNumber: "+966 50 000 0011",
-    city: "Riyadh",
-    district: "Batha",
-    iban: "SA0000000000000000000003",
-    bankName: "Al Rajhi Bank",
-    contract: { basicSalary: 3500, housingAllowance: 800, transportAllowance: 400, otherAllowance: 0 },
-    role: UserRole.EMPLOYEE
-  },
-  // 12. Driver (Pakistani)
-  {
-    id: "10012",
-    companyId: "COMP-001",
-    managerId: "10002",
-    fullName: "Muhammad Ali",
-    nationality: "Pakistan",
-    iqamaOrNationalId: "2000000007",
-    idExpiryDate: "2027-04-10",
-    position: "Driver",
-    department: "Logistics",
-    joinDate: "2021-08-20",
-    email: "ali@company.com",
-    phoneNumber: "+966 50 000 0012",
-    city: "Jeddah",
-    district: "Rawdah",
-    iban: "SA0000000000000000000004",
-    bankName: "SNB",
-    contract: { basicSalary: 4500, housingAllowance: 1125, transportAllowance: 500, otherAllowance: 0 },
-    role: UserRole.EMPLOYEE
-  },
-  // 13. Another Saudi
-  {
-    id: "10013",
-    companyId: "COMP-001",
-    managerId: "10008",
-    fullName: "Omar Al-Harbi",
-    nationality: "Saudi Arabia",
-    iqamaOrNationalId: "1000000006",
-    idExpiryDate: "2029-01-01",
-    position: "Junior Sales",
-    department: "Sales",
-    joinDate: "2023-09-01",
-    email: "omar@company.com",
-    phoneNumber: "+966 50 000 0013",
-    city: "Riyadh",
-    district: "Malaz",
-    iban: "SA0000000000000000000005",
-    bankName: "Riyad Bank",
-    contract: { basicSalary: 6000, housingAllowance: 1500, transportAllowance: 500, otherAllowance: 1000 },
-    role: UserRole.EMPLOYEE
-  },
+  }
 ];
 
 // SEED DATA: Requests
@@ -313,6 +61,8 @@ const REQUEST_SEED_DATA: ServiceRequest[] = [];
 const WARNINGS_SEED_DATA: any[] = [];
 // SEED DATA: Deductions
 const DEDUCTIONS_SEED_DATA: any[] = [];
+// SEED DATA: Commitments
+const COMMITMENTS_SEED_DATA: any[] = [];
 
 // --- DATABASE SIMULATION HELPERS ---
 
@@ -358,6 +108,36 @@ const getDeductionsDb = (): any[] => {
   } catch (e) { return DEDUCTIONS_SEED_DATA; }
 }
 const saveDeductionsDb = (data: any[]) => localStorage.setItem(DEDUCTIONS_KEY, JSON.stringify(data));
+
+// --- HIRED WORKERS ---
+const HIRED_WORKERS_KEY = 'hr_system_hired_workers_v1';
+import { HiredWorker } from '../types';
+
+const getHiredWorkersDb = (): HiredWorker[] => {
+  try {
+    const stored = localStorage.getItem(HIRED_WORKERS_KEY);
+    if (stored) return JSON.parse(stored);
+    return [];
+  } catch (e) { return []; }
+}
+const saveHiredWorkersDb = (data: HiredWorker[]) => localStorage.setItem(HIRED_WORKERS_KEY, JSON.stringify(data));
+
+export const getHiredWorkers = async (): Promise<HiredWorker[]> => {
+  await delay(500);
+  return getHiredWorkersDb();
+};
+
+export const addHiredWorker = async (worker: Omit<HiredWorker, 'id'>): Promise<HiredWorker> => {
+  await delay(500);
+  const db = getHiredWorkersDb();
+  const newWorker: HiredWorker = {
+    ...worker,
+    id: `HW-${Date.now()}`
+  };
+  db.push(newWorker);
+  saveHiredWorkersDb(db);
+  return newWorker;
+};
 
 // --- COUNTRY DATA FOR DROPDOWN ---
 export interface Country {
@@ -597,8 +377,28 @@ export const updateRequestStatus = async (id: string, status: RequestStatus, app
   await delay(400);
   const db = getRequestsDb();
   const idx = db.findIndex(r => r.id === id);
+
   if (idx !== -1) {
-    db[idx] = { ...db[idx], status, approverId };
+    const currentStatus = db[idx].status;
+    let nextStatus = status;
+
+    // Sequential Approval Logic
+    if (status === RequestStatus.APPROVED) { // If "Approve" action is triggered
+      if (currentStatus === RequestStatus.PENDING_MANAGER) {
+        nextStatus = RequestStatus.PENDING_GM;
+      } else if (currentStatus === RequestStatus.PENDING_GM) {
+        nextStatus = RequestStatus.PENDING_HR;
+      } else if (currentStatus === RequestStatus.PENDING_HR) {
+        nextStatus = RequestStatus.APPROVED;
+      }
+    }
+
+    // If Rejected, it goes straight to REJECTED regardless of stage
+    if (status === RequestStatus.REJECTED) {
+      nextStatus = RequestStatus.REJECTED;
+    }
+
+    db[idx] = { ...db[idx], status: nextStatus, approverId };
     saveRequestsDb(db);
     return db[idx];
   }
@@ -735,4 +535,58 @@ export const getOrgHierarchy = async (): Promise<OrgTreeNode | null> => {
   }
 
   return rootNodes[0];
+};
+
+// --- COMMITMENTS API METHODS ---
+import { Commitment, CommitmentType } from '../types';
+
+const getCommitmentsDb = (): Commitment[] => {
+  try {
+    const stored = localStorage.getItem(COMMITMENTS_KEY);
+    if (stored) return JSON.parse(stored);
+    localStorage.setItem(COMMITMENTS_KEY, JSON.stringify(COMMITMENTS_SEED_DATA));
+    return COMMITMENTS_SEED_DATA;
+  } catch (e) { return COMMITMENTS_SEED_DATA; }
+}
+const saveCommitmentsDb = (data: Commitment[]) => localStorage.setItem(COMMITMENTS_KEY, JSON.stringify(data));
+
+export const getCommitments = async (): Promise<Commitment[]> => {
+  await delay(300);
+  return getCommitmentsDb();
+};
+
+export const addCommitment = async (commitment: Omit<Commitment, 'id'>): Promise<Commitment> => {
+  await delay(300);
+  const db = getCommitmentsDb();
+  const newCommitment: Commitment = {
+    ...commitment,
+    id: `CMT-${Date.now()}`,
+    status: 'Pending'
+  };
+  db.push(newCommitment);
+  saveCommitmentsDb(db);
+  return newCommitment;
+};
+
+export const deleteCommitment = async (id: string): Promise<void> => {
+  await delay(300);
+  const db = getCommitmentsDb();
+  const newDb = db.filter(c => c.id !== id);
+  saveCommitmentsDb(newDb);
+};
+
+export const signCommitment = async (id: string): Promise<Commitment> => {
+  await delay(300);
+  const db = getCommitmentsDb();
+  const index = db.findIndex(c => c.id === id);
+  if (index !== -1) {
+    db[index] = {
+      ...db[index],
+      status: 'Signed',
+      signedAt: new Date().toISOString()
+    };
+    saveCommitmentsDb(db);
+    return db[index];
+  }
+  throw new Error("Commitment not found");
 };

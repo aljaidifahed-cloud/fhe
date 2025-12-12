@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useNotifications } from '../contexts/NotificationsContext';
 import { Page } from '../types';
 import { NationalityType, Employee } from '../types';
 import { addEmployee, getCountries, getNextEmployeeId, Country } from '../services/mockService';
@@ -11,6 +12,7 @@ interface AddEmployeeProps {
 
 export const AddEmployee: React.FC<AddEmployeeProps> = ({ onNavigate }) => {
   const { t, language } = useLanguage();
+  const { addNotification } = useNotifications();
   const [loading, setLoading] = useState(false);
   const [countries, setCountries] = useState<Country[]>([]);
   const [jobId, setJobId] = useState<string>('Loading...');
@@ -65,10 +67,17 @@ export const AddEmployee: React.FC<AddEmployeeProps> = ({ onNavigate }) => {
         housingAllowance: Number(formData.housingAllowance),
         transportAllowance: Number(formData.transportAllowance),
         otherAllowance: Number(formData.otherAllowance),
-      }
+      },
+      role: 'EMPLOYEE' as any
     };
 
     await addEmployee(newEmployee);
+    addNotification({
+      title: t('notifications'),
+      message: `${t('new_employee')
+        } - ${newEmployee.fullName} `,
+      type: 'success'
+    });
     setLoading(false);
     onNavigate(Page.EMPLOYEES);
   };

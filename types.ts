@@ -15,7 +15,8 @@ export enum Page {
   PERMISSIONS = 'permissions',
   INBOX = 'inbox',
   WARNINGS_COMMITMENTS = 'warnings_commitments',
-  MY_WARNINGS = 'my_warnings'
+  MY_WARNINGS = 'my_warnings',
+  HIRED_LABOR = 'hired_labor'
 }
 
 export enum UserRole {
@@ -130,14 +131,19 @@ export interface DepartmentStat {
 export enum RequestType {
   LEAVE = 'LEAVE',
   ASSET = 'ASSET',
+  LOAN = 'LOAN',
   PUNCH_CORRECTION = 'PUNCH_CORRECTION',
+  CLEARANCE = 'CLEARANCE',
   RESIGNATION = 'RESIGNATION',
-  LETTER = 'LETTER_REQUEST',
-  LOAN = 'LOAN'
+  CONTRACT_NON_RENEWAL = 'CONTRACT_NON_RENEWAL',
+  AUTHORIZATION = 'AUTHORIZATION',
+  LETTER = 'LETTER',
+  PERMISSION = 'PERMISSION'
 }
 
 export enum RequestStatus {
   PENDING_MANAGER = 'PENDING_MANAGER',
+  PENDING_GM = 'PENDING_GM',
   PENDING_HR = 'PENDING_HR',
   APPROVED = 'APPROVED',
   REJECTED = 'REJECTED',
@@ -145,13 +151,18 @@ export enum RequestStatus {
 }
 
 // Discriminated Union for JSONB Details
+// Discriminated Union for JSONB Details
 export type RequestDetails =
-  | { type: RequestType.LEAVE; startDate: string; endDate: string; leaveType: string; reason: string; attachmentUrl?: string }
-  | { type: RequestType.ASSET; itemName: string; assetType: string; justification: string }
-  | { type: RequestType.PUNCH_CORRECTION; date: string; correctTime: string; reason: string; punchType: 'IN' | 'OUT' }
-  | { type: RequestType.RESIGNATION; lastWorkingDay: string; reason: string }
-  | { type: RequestType.LETTER; letterType: string; addressee: string }
-  | { type: RequestType.LOAN; amount: number; installments: number; reason: string };
+  | { type: RequestType.LEAVE; leaveType: string; startDate: string; endDate: string; }
+  | { type: RequestType.ASSET; itemName: string; serialNumber?: string; }
+  | { type: RequestType.LOAN; amount: number; reason: string; }
+  | { type: RequestType.PUNCH_CORRECTION; date: string; reason: string; }
+  | { type: RequestType.CLEARANCE; lastWorkingDay: string; notes?: string; }
+  | { type: RequestType.RESIGNATION; resignationDate: string; reason: string; }
+  | { type: RequestType.CONTRACT_NON_RENEWAL; requestedDate: string; reason: string; }
+  | { type: RequestType.AUTHORIZATION; delegateName: string; startDate: string; endDate: string; reason: string; }
+  | { type: RequestType.LETTER; letterType: string; purpose: string; }
+  | { type: RequestType.PERMISSION; date: string; startTime: string; endTime: string; reason: string; };
 
 export interface ServiceRequest {
   id: string;
@@ -208,4 +219,29 @@ export interface PayrollDeduction {
   amount: number;
   reason: string;
   createdAt: string;
+}
+
+export enum CommitmentType {
+  GENERAL = 'GENERAL',
+  SAFETY = 'SAFETY',
+  CUSTODY = 'CUSTODY',
+  ATTENDANCE = 'ATTENDANCE'
+}
+
+export interface Commitment {
+  id: string;
+  employeeId: string;
+  type: CommitmentType;
+  description: string;
+  date: string; // Issue Date
+  status: 'Pending' | 'Signed';
+  signedAt?: string;
+}
+
+export interface HiredWorker {
+  id: string;
+  fullName: string;
+  residencyNumber: string; // Iqama/ID
+  employerName: string; // External company name
+  jobTitle: string;
 }

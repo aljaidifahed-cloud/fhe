@@ -85,6 +85,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
   const nonSaudiCount = totalEmployees - saudiCount;
 
   const totalPayrollCost = employees.reduce((acc, emp) => {
+    if (!emp.contract) {
+      console.error('Employee missing contract:', emp);
+      return acc;
+    }
     const payroll = calculatePayroll(emp);
     return acc + payroll.grossSalary + payroll.gosiDeductionEmployer;
   }, 0);
@@ -183,7 +187,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
         );
       case 'monthly-cost':
         return (
-          <CostChart totalCost={formatCurrency(totalPayrollCost, language === 'ar' ? 'ar-SA' : 'en-SA')} />
+          <CostChart
+            totalCost={formatCurrency(totalPayrollCost, language === 'ar' ? 'ar-SA' : 'en-SA')}
+            onClick={() => onNavigate(Page.PAYROLL)}
+          />
         );
       case 'pending-requests':
         return (
@@ -272,6 +279,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
     // Metric cards take 1 column
     return 'col-span-1';
   };
+
+
 
   return (
     <div className="space-y-6 animate-fadeIn pb-10">

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Tree from 'react-d3-tree';
 import { useLanguage } from '../contexts/LanguageContext';
 import { getOrgHierarchy, assignManager, deleteEmployee, addEmployee, getNextEmployeeId, getEmployees } from '../services/mockService';
-import { OrgTreeNode, Employee } from '../types';
+import { OrgTreeNode, Employee, UserRole } from '../types';
 import { Page } from '../types';
 import { ArrowPathIcon, MinusIcon, PlusIcon, ArrowsPointingOutIcon, UserPlusIcon, TrashIcon, ArrowRightStartOnRectangleIcon, MagnifyingGlassIcon, XMarkIcon, BriefcaseIcon, UsersIcon } from '@heroicons/react/24/outline';
 
@@ -200,7 +200,8 @@ export const OrgChart: React.FC<OrgChartProps> = ({ onNavigate }) => {
             housingAllowance: 0,
             transportAllowance: 0,
             otherAllowance: 0
-          }
+          },
+          role: UserRole.EMPLOYEE
         };
         await addEmployee(newEmployee);
       }

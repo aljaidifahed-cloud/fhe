@@ -19,6 +19,7 @@ import { Permissions } from './pages/Permissions';
 import { Inbox } from './pages/Inbox';
 import { WarningsCommitments } from './pages/WarningsCommitments';
 import { MyWarnings } from './pages/MyWarnings'; // New Import
+import { HiredLabor } from './pages/HiredLabor'; // New Import
 import { Login } from './pages/Login';
 import { Landing } from './pages/Landing';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -194,6 +195,8 @@ const AppContent: React.FC = () => {
                           return <WarningsCommitments />;
                         case Page.MY_WARNINGS:
                           return <MyWarnings />;
+                        case Page.HIRED_LABOR:
+                          return <HiredLabor onNavigate={setCurrentPage} />;
                         default:
                           return <Dashboard onNavigate={setCurrentPage} />;
                       }

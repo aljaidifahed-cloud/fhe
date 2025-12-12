@@ -66,20 +66,20 @@ app.get('/api/requests', async (req, res) => {
 
         // Build Dynamic Query
         let queryText = `
-            SELECT r.*, e.full_name as user_name, e.avatar_url 
+            SELECT r.*, e.full_name as user_name
             FROM requests r
             JOIN employees e ON r.user_id = e.id
             WHERE r.company_id = $1
-        `;
+            `;
         const values = [companyId];
         let paramIndex = 2;
 
         if (type) {
-            queryText += ` AND r.type = $${paramIndex++}`;
+            queryText += ` AND r.type = $${paramIndex++} `;
             values.push(type);
         }
         if (status) {
-            queryText += ` AND r.status = $${paramIndex++}`;
+            queryText += ` AND r.status = $${paramIndex++} `;
             values.push(status);
         }
 
@@ -113,9 +113,9 @@ app.post('/api/requests', async (req, res) => {
         }
 
         const result = await pool.query(
-            `INSERT INTO requests (company_id, user_id, type, status, details) 
-             VALUES ($1, $2, $3, 'PENDING_MANAGER', $4) 
-             RETURNING *`,
+            `INSERT INTO requests(company_id, user_id, type, status, details)
+        VALUES($1, $2, $3, 'PENDING_MANAGER', $4)
+        RETURNING * `,
             [companyId, userId, type, details]
         );
 
@@ -135,8 +135,8 @@ app.patch('/api/requests/:id/status', async (req, res) => {
         const result = await pool.query(
             `UPDATE requests 
              SET status = $1, approver_id = $2, updated_at = NOW() 
-             WHERE id = $3 
-             RETURNING *`,
+             WHERE id = $3
+        RETURNING * `,
             [status, approverId, id]
         );
 
@@ -151,5 +151,5 @@ app.patch('/api/requests/:id/status', async (req, res) => {
 
 // --- EXISTING ENDPOINTS (Truncated for brevity, assume they exist) ---
 app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+    console.log(`Server running on port ${PORT} `);
 });

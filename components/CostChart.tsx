@@ -21,9 +21,10 @@ const data = [
 
 interface CostChartProps {
     totalCost: string;
+    onClick?: () => void;
 }
 
-export const CostChart: React.FC<CostChartProps> = ({ totalCost }) => {
+export const CostChart: React.FC<CostChartProps> = ({ totalCost, onClick }) => {
     const { t } = useLanguage();
 
     const option = {
@@ -65,7 +66,10 @@ export const CostChart: React.FC<CostChartProps> = ({ totalCost }) => {
     };
 
     return (
-        <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 transition-colors relative overflow-hidden h-40 flex flex-col justify-between group hover:shadow-md duration-200">
+        <div
+            onClick={onClick}
+            className={`bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 transition-colors relative overflow-hidden h-40 flex flex-col justify-between group hover:shadow-md duration-200 ${onClick ? 'cursor-pointer hover:border-emerald-200 dark:hover:border-emerald-900/50' : ''}`}
+        >
 
             {/* Chart Background (Absolute) */}
             <div className="absolute inset-0 z-0 opacity-20 pointer-events-auto">

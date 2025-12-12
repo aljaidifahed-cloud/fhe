@@ -47,6 +47,7 @@ export const translations = {
     tenant_id: "Tenant ID",
     logout: "Logout",
     save: "Save",
+    saving: "Saving...",
     cancel: "Cancel",
     amount: "Amount",
     reason: "Reason",
@@ -66,12 +67,11 @@ export const translations = {
     notifications: "Notifications",
     cannot_edit_admin_permissions: "Cannot edit Admin permissions",
     private_section: "Blackboard",
-    private: "Blackboard",
     employee: "Employee",
     position: "Position",
     warnings_commitments: "Warnings & Commitments", // NEW // NEW
+    hired_labor: "Hired Labor",
 
-    // Dashboard
     // Dashboard
     hr_dashboard: "Month Summary and Achievements",
     welcome_msg: "Welcome, Fahad Al-Juaidi, how are you today?",
@@ -117,8 +117,8 @@ export const translations = {
     lbl_department: "Department",
     lbl_job_title: "Job Title",
     lbl_job_summary: "Job Summary",
-    lbl_job_summary: "Job Summary",
     lbl_email: "Email Address",
+    lbl_join_date: "Join Date",
     lbl_iban: "IBAN",
     lbl_bank: "Bank Name",
     lbl_contract_details: "Contract & Salary Details",
@@ -238,12 +238,10 @@ export const translations = {
     save_item: "Save Item",
     add_asset: "Add Custody Item",
     no_assets: "No custody items assigned.",
-    no_assets: "No custody items assigned.",
     notes: "Notes",
     asset_electronics: "Electronics",
     asset_furniture: "Furniture",
     asset_vehicle: "Vehicle",
-    asset_accessory: "Accessory",
     asset_accessory: "Accessory",
     asset_other: "Other",
     actions: "Actions",
@@ -278,10 +276,15 @@ export const translations = {
     // REQUESTS / SELF SERVICE
     req_center: "Requests Center",
     req_subtitle: "Manage leaves, assets, and other service requests.",
+    no_requests_found: "No requests found.",
     req_new: "New Request",
-    req_tab_all: "All",
-    req_tab_pending: "Pending",
-    req_tab_approved: "Approved",
+    req_tab_all: "الكل",
+    req_tab_pending: "معلق",
+    req_tab_approved: "مقبول",
+    req_status_pending_manager: "بانتظار المدير المباشر",
+    req_status_pending_gm: "بانتظار المدير العام",
+    req_status_pending_hr: "بانتظار مدير الموارد البشرية",
+    req_status_approved: "مقبول",
     req_tab_rejected: "Rejected",
     req_type: "Request Type",
     req_status: "Status",
@@ -299,6 +302,7 @@ export const translations = {
     req_leave_type_label: "Type of Leave",
     req_start_date: "Start Date",
     req_end_date: "End Date",
+    req_serial_number: "Serial Number",
     req_item_name: "Item Name",
     req_justification: "Justification",
     req_date_label: "Date",
@@ -318,6 +322,28 @@ export const translations = {
     req_punch_in: "Check In",
     req_punch_out: "Check Out",
     req_view_attendance: "View Attendance Logs",
+    // New Request Types Keys
+
+    req_type_clearance: "Clearance Request",
+    req_type_resignation: "Resignation Request",
+    req_type_contract_non_renewal: "Contract Non-Renewal",
+    req_type_authorization: "Authorization Request",
+    req_type_permission: "Permission Request",
+    req_type_vacation: "Vacation Request", // Mapped to LEAVE
+
+    // New Form Fields
+    req_amount: "Amount",
+    req_installments: "Installments", // Optional but good for Loan
+    req_last_working_day: "Last Working Day",
+    req_notes: "Notes",
+    req_resignation_date: "Resignation Date",
+    req_requested_date: "Requested Date",
+    req_delegate_name: "Delegate Name",
+    req_start_time: "Start Time",
+    req_end_time: "End Time",
+    req_letter_type: "Letter Type",
+    req_purpose: "Purpose / Addressee",
+
     chat_create_group: "Create temporary group",
     chat_group_name: "Group Name",
     chat_member_limit: "Member Limit",
@@ -371,6 +397,7 @@ export const translations = {
     add_sub: "Add Sub",
     move_node: "Move",
     delete_node: "Delete",
+    delete: "Delete",
     cancel_move: "Cancel Move",
     cancel_assignment: "Cancel Assignment",
 
@@ -535,6 +562,15 @@ export const translations = {
     pending_acknowledgement: "Pending Acknowledgement",
     warning_notification_title: "New Warning Issued",
     warning_notification_body: "You have received a new warning. Please review and acknowledge.",
+
+    // Hired Labor
+    add_worker: "Add Worker",
+    worker_name: "Worker Name",
+    residency_number: "Residency Number",
+    external_employer: "Employer Name",
+    worker_job_title: "Job Title",
+    hired_labor_warning: "They have no connection to the 'Personnel' department.",
+    no_hired_workers: "No hired workers listed yet.",
   },
   ar: {
     // Landing Page
@@ -583,6 +619,7 @@ export const translations = {
     tenant_id: "معرف المنشأة",
     logout: "تسجيل خروج",
     save: "حفظ",
+    saving: "جاري الحفظ...",
     cancel: "إلغاء",
     amount: "المبلغ",
     reason: "السبب",
@@ -606,6 +643,16 @@ export const translations = {
     employee: "الموظف",
     position: "المسمى الوظيفي",
     warnings_commitments: "الإنذارات والتعهدات", // NEW
+    hired_labor: "العمالة المستأجرة",
+
+    // Hired Labor (Arabic)
+    add_worker: "إضافة عامل",
+    worker_name: "اسم العامل",
+    residency_number: "رقم الإقامة",
+    external_employer: "اسم صاحب العمل",
+    worker_job_title: "المسمى الوظيفي",
+    hired_labor_warning: "ليس لديهم ارتباط بقسم شؤون الموظفين.",
+    no_hired_workers: "لا يوجد عمالة مستأجرة مسجلة.",
 
     // Dashboard
     // Dashboard
@@ -651,8 +698,8 @@ export const translations = {
     lbl_id_expiry: "تاريخ انتهاء الهوية",
     lbl_position: "المسمى الوظيفي",
     lbl_department: "القسم",
-    lbl_join_date: "تاريخ الالتحاق",
     lbl_email: "البريد الإلكتروني",
+    lbl_join_date: "تاريخ الانضمام",
     lbl_iban: "رقم الآيبان",
     lbl_bank: "اسم البنك",
     lbl_contract_details: "تفاصيل العقد والراتب",
@@ -775,12 +822,10 @@ export const translations = {
     save_item: "حفظ العنصر",
     add_asset: "إضافة عهدة",
     no_assets: "لا توجد عهد معينة.",
-    no_assets: "لا توجد عهد معينة.",
     notes: "ملاحظات",
     asset_electronics: "إلكترونيات",
     asset_furniture: "أثاث",
     asset_vehicle: "مركبة",
-    asset_accessory: "ملحقات",
     asset_accessory: "ملحقات",
     asset_other: "أخرى",
     actions: "إجراءات",
@@ -854,7 +899,31 @@ export const translations = {
     req_punch_type_label: "نوع البصمة",
     req_punch_in: "تسجيل دخول",
     req_punch_out: "تسجيل خروج",
-    req_view_attendance: "عرض سجل الحضور",
+    req_view_attendance: "عرض سجلات الحضور",
+    // New Request Types Keys (Arabic)
+    req_type_clearance: "طلب إخلاء طرف",
+
+    // Hired Labor
+
+    req_type_resignation: "طلب استقالة",
+    req_type_contract_non_renewal: "طلب عدم تجديد عقد",
+    req_type_authorization: "طلب تفويض",
+    req_type_permission: "طلب استئذان",
+    req_type_vacation: "طلب إجازة",
+
+    // New Form Fields (Arabic)
+    req_amount: "المبلغ",
+    req_installments: "عدد الأقساط",
+    req_last_working_day: "آخر يوم عمل",
+    req_notes: "ملاحظات",
+    req_resignation_date: "تاريخ الاستقالة",
+    req_requested_date: "التاريخ المطلوب",
+    req_delegate_name: "اسم المفوض",
+    req_start_time: "وقت البدء",
+    req_end_time: "وقت الانتهاء",
+    req_letter_type: "نوع الخطاب",
+    req_purpose: "الغرض / الموجه إليه",
+
     chat_create_group: "إنشاء مجموعة مؤقتة",
     chat_group_name: "اسم المجموعة",
     chat_member_limit: "عدد الأعضاء",
@@ -1060,6 +1129,7 @@ export const translations = {
     edit_btn: "تعديل",
     edit_warning_modal_title: "تعديل الإنذار",
     delete_warning_tooltip: "حذف الإنذار",
+    delete: "حذف",
     my_warnings: "فائمة إنذاراتي",
     acknowledge_btn: "الموافقة والإقرار",
     acknowledged_status: "تم الإقرار",

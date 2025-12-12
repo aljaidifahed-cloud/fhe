@@ -26,32 +26,7 @@ const NotificationsContext = createContext<NotificationsContextType | undefined>
 export const NotificationsProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const { currentUser } = useAuth();
     const { t } = useLanguage();
-    const [notifications, setNotifications] = useState<Notification[]>([
-        {
-            id: '1',
-            title: 'new_request',
-            message: 'msg_vacation_request',
-            time: 'time_10m_ago',
-            type: 'info',
-            read: false,
-        },
-        {
-            id: '2',
-            title: 'system_update',
-            message: 'msg_system_update',
-            time: 'time_1h_ago',
-            type: 'success',
-            read: false,
-        },
-        {
-            id: '3',
-            title: 'warning',
-            message: 'msg_demo_incomplete_profiles',
-            time: 'time_2h_ago',
-            type: 'warning',
-            read: true,
-        }
-    ]);
+    const [notifications, setNotifications] = useState<Notification[]>([]);
 
     const unreadCount = notifications.filter(n => !n.read).length;
 

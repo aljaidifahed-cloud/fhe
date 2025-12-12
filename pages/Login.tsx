@@ -19,18 +19,26 @@ export const Login: React.FC<LoginProps> = ({ onLogin, onBack }) => {
     setLanguage(language === 'en' ? 'ar' : 'en');
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Admin (Fahad)
-    if ((email === 'fahad@fahad.sa' || email === 'fahad@fahad.com' || email === 'fahad@company.com') && password === '12') {
-      onLogin('10001');
-    }
-    // IT Support (Hail - Non-Admin)
-    else if (email === 'hail@company.com' && password === '12') {
-      onLogin('10007');
-    }
-    else {
-      setError(t('invalid_credentials'));
+
+    try {
+      // 1. Fetch all employees
+      const { getEmployees } = await import('../services/mockService');
+      const employees = await getEmployees();
+
+      // 2. Find user by email
+      const user = employees.find(emp => emp.email.toLowerCase() === email.toLowerCase());
+
+      // 3. Validate Password ("12" for everyone)
+      if (user && password === '12') {
+        onLogin(user.id);
+      } else {
+        setError(t('invalid_credentials'));
+      }
+    } catch (err) {
+      console.error("Login failed:", err);
+      setError("System error during login. Please try again.");
     }
   };
 
