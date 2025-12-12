@@ -83,7 +83,7 @@ export const Requests: React.FC = () => {
     // Filter Logic
     const filteredRequests = requests.filter(r => {
         if (activeTab === 'ALL') return true;
-        if (activeTab === 'PENDING') return r.status === RequestStatus.PENDING_MANAGER || r.status === RequestStatus.PENDING_HR;
+        if (activeTab === 'PENDING') return r.status === RequestStatus.PENDING_MANAGER || r.status === RequestStatus.PENDING_GM || r.status === RequestStatus.PENDING_HR;
         return r.status === activeTab;
     });
 
