@@ -52,6 +52,28 @@ const SEED_DATA: Employee[] = [
         status: "Active"
       }
     ]
+  },
+  // 2. Saleh (New User)
+  {
+    id: "10002",
+    companyId: "COMP-001",
+    managerId: "10001",
+    fullName: "Saleh",
+    nationality: "Saudi Arabia",
+    iqamaOrNationalId: "1000000002",
+    idExpiryDate: "2030-01-01",
+    position: "Operations Manager",
+    department: "Operations",
+    joinDate: "2021-01-01",
+    email: "saleh@view.sa",
+    phoneNumber: "+966 50 000 0002",
+    city: "Riyadh",
+    district: "Al Malqa",
+    iban: "SA0000000000000000000002",
+    bankName: "Al Rajhi Bank",
+    contract: { basicSalary: 8000, housingAllowance: 2000, transportAllowance: 800, otherAllowance: 0 },
+    role: UserRole.EMPLOYEE,
+    assets: []
   }
 ];
 
@@ -211,6 +233,36 @@ export const uploadFile = async (file: File): Promise<string> => {
 export const getEmployees = async (): Promise<Employee[]> => {
   await delay(600);
   const data = getDb();
+
+  // MIGRATION: Ensure Saleh exists in the current DB version (v11/v12/v13)
+  const salehExists = data.find(e => e.email === 'saleh@view.sa');
+  if (!salehExists) {
+    const saleh: Employee = {
+      id: "10002",
+      companyId: "COMP-001",
+      managerId: "10001",
+      fullName: "Saleh",
+      nationality: "Saudi Arabia",
+      iqamaOrNationalId: "1000000002",
+      idExpiryDate: "2030-01-01",
+      position: "Operations Manager",
+      department: "Operations",
+      joinDate: "2021-01-01",
+      email: "saleh@view.sa",
+      phoneNumber: "+966 50 000 0002",
+      city: "Riyadh",
+      district: "Al Malqa",
+      iban: "SA0000000000000000000002",
+      bankName: "Al Rajhi Bank",
+      contract: { basicSalary: 8000, housingAllowance: 2000, transportAllowance: 800, otherAllowance: 0 },
+      role: UserRole.EMPLOYEE,
+      assets: []
+    };
+    data.push(saleh);
+    saveDb(data);
+    console.log("[API] MIGRATION: Added Saleh to DB");
+  }
+
   console.log("[API] GET /employees response:", data);
   return data;
 };
